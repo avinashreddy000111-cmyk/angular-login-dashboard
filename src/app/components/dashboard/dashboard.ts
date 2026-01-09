@@ -24,17 +24,20 @@ export class DashboardComponent {
   authService = inject(AuthService);
   private fileService = inject(FileProcessingService);
 
-  transactionTypes: TransactionType[] = ['ORDER', 'ASN'];
-  formats: FormatType[] = ['EDI', 'JSON'];
-  responseTypes: ResponseType[] = ['ACK', 'SHIPCONF', 'RECEIPT'];
+  TransactionType = TransactionType;
+  FormatType = FormatType;
+  ResponseType = ResponseType;
 
-  selectedTransactionType = signal<TransactionType>('ORDER');
-  selectedFormat = signal<FormatType>('EDI');
-  selectedResponseType = signal<ResponseType>('ACK');
+  transactionTypes = Object.values(TransactionType);
+  formats = Object.values(FormatType);
+  responseTypes = Object.values(ResponseType);
+
+  selectedTransactionType = signal<TransactionType>(TransactionType.ORDER);
+  selectedFormat = signal<FormatType>(FormatType.EDI);
+  selectedResponseType = signal<ResponseType>(ResponseType.ACK);
 
   selectedFile = signal<File | null>(null);
   isDragOver = signal(false);
-
   isProcessing = signal(false);
   processedResult = signal<ProcessingResponse | null>(null);
   errorMessage = signal<string | null>(null);
