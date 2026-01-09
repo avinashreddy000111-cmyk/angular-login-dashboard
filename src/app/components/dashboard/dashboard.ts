@@ -4,7 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { FileProcessingService } from '../../services/file-processing';
-import { ProcessingResponse, DashboardFormData } from '../../models/interfaces';
+import { 
+  ProcessingResponse, 
+  DashboardFormData,
+  TransactionType,
+  FormatType,
+  ResponseType
+} from '../../models/interfaces';
 
 @Component({
   selector: 'app-dashboard',
@@ -18,13 +24,13 @@ export class DashboardComponent {
   authService = inject(AuthService);
   private fileService = inject(FileProcessingService);
 
-  transactionTypes = ['ORDER', 'ASN'];
-  formats = ['EDI', 'JSON'];
-  responseTypes = ['ACK', 'SHIPCONF', 'RECEIPT'];
+  transactionTypes: TransactionType[] = ['ORDER', 'ASN'];
+  formats: FormatType[] = ['EDI', 'JSON'];
+  responseTypes: ResponseType[] = ['ACK', 'SHIPCONF', 'RECEIPT'];
 
-  selectedTransactionType = signal('ORDER');
-  selectedFormat = signal('EDI');
-  selectedResponseType = signal('ACK');
+  selectedTransactionType = signal<TransactionType>('ORDER');
+  selectedFormat = signal<FormatType>('EDI');
+  selectedResponseType = signal<ResponseType>('ACK');
 
   selectedFile = signal<File | null>(null);
   isDragOver = signal(false);
@@ -83,12 +89,10 @@ export class DashboardComponent {
       responseType: this.selectedResponseType()
     };
 
-    // formData first, then file
     this.fileService.processFileSimulated(formData, file).subscribe({
       next: (response) => {
         this.processedResult.set(response);
         this.isProcessing.set(false);
-        // Clear input file after successful processing
         this.selectedFile.set(null);
       },
       error: (error) => {
@@ -114,7 +118,6 @@ export class DashboardComponent {
     link.download = result.filename;
     link.click();
     window.URL.revokeObjectURL(url);
-    // Clear output after download
     this.processedResult.set(null);
   }
 
