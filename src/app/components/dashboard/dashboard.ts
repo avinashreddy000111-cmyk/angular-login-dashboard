@@ -3,7 +3,15 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth';
-import { FileProcessingService, ProcessingResponse } from '../../services/file-processing';
+import { FileProcessingService } from '../../services/file-processing';
+
+interface ProcessingResponse {
+  success: boolean;
+  filename: string;
+  content: string;
+  mimeType: string;
+  message: string;
+}
 
 @Component({
   selector: 'app-dashboard',
@@ -56,7 +64,6 @@ export class DashboardComponent {
     const files = event.dataTransfer?.files;
     if (files && files.length > 0) {
       this.selectedFile.set(files[0]);
-      // Clear previous results when new file is selected
       this.processedResult.set(null);
       this.errorMessage.set(null);
     }
@@ -66,7 +73,6 @@ export class DashboardComponent {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
       this.selectedFile.set(input.files[0]);
-      // Clear previous results when new file is selected
       this.processedResult.set(null);
       this.errorMessage.set(null);
     }
@@ -101,6 +107,11 @@ export class DashboardComponent {
         this.isProcessing.set(false);
       }
     });
+  }
+
+  // Keep both function names for compatibility
+  downloadOutput(): void {
+    this.downloadResult();
   }
 
   downloadResult(): void {
