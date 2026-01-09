@@ -4,14 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { FileProcessingService } from '../../services/file-processing';
-
-interface ProcessingResponse {
-  success: boolean;
-  filename: string;
-  content: string;
-  mimeType: string;
-  message: string;
-}
+import { ProcessingResponse } from '../../models/interfaces';
 
 @Component({
   selector: 'app-dashboard',
@@ -90,31 +83,27 @@ export class DashboardComponent {
     this.isProcessing.set(true);
     this.errorMessage.set(null);
 
-    this.fileService.processFileSimulated(
-      file,
-      this.selectedTransactionType(),
-      this.selectedFormat(),
-      this.selectedResponseType()
-    ).subscribe({
-      next: (response: ProcessingResponse) => {
+    const config = {
+      transactionType: this.selectedTransactionType(),
+      format: this.selectedFormat(),
+      responseType: this.selectedResponseType()
+    };
+
+    this.fileService.processFileSimulated(file, config).subscribe({
+      next: (response) => {
         this.processedResult.set(response);
         this.isProcessing.set(false);
         // Clear the input file after successful processing
         this.selectedFile.set(null);
       },
-      error: (error: Error) => {
+      error: (error) => {
         this.errorMessage.set(error.message || 'Processing failed');
         this.isProcessing.set(false);
       }
     });
   }
 
-  // Keep both function names for compatibility
   downloadOutput(): void {
-    this.downloadResult();
-  }
-
-  downloadResult(): void {
     const result = this.processedResult();
     if (!result) return;
 
