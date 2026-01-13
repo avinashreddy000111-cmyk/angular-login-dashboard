@@ -75,7 +75,7 @@ export class DashboardComponent {
     this.selectedTransactionType.set(value as TransactionType);
     // Reset ORDER TYPE to default when switching to ORDER
     if (value === TransactionType.ORDER) {
-      this.selectedOrderType.set(OrderType.PURCHASE_ORDER);
+      this.selectedOrderType.set(OrderType.LTL);
     }
   }
 
