@@ -18,10 +18,8 @@ export enum TransactionType {
 
 // NEW: Order Type - only shown when Transaction Type is ORDER
 export enum OrderType {
-  PURCHASE_ORDER = 'PURCHASE_ORDER',
-  SALES_ORDER = 'SALES_ORDER',
-  RETURN_ORDER = 'RETURN_ORDER',
-  TRANSFER_ORDER = 'TRANSFER_ORDER'
+  LTL = 'LTL',
+  PARCEL = 'PARCEL'
 }
 
 export enum FormatType {
