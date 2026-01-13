@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -24,25 +24,45 @@ export class DashboardComponent {
   authService = inject(AuthService);
   private fileService = inject(FileProcessingService);
 
+  // Enum references for template
   TransactionType = TransactionType;
   FormatType = FormatType;
   ResponseType = ResponseType;
 
+  // Dropdown options
   transactionTypes = Object.values(TransactionType);
   formats = Object.values(FormatType);
   responseTypes = Object.values(ResponseType);
 
+  // Selected values using enums
   selectedTransactionType = signal<TransactionType>(TransactionType.ORDER);
   selectedFormat = signal<FormatType>(FormatType.EDI);
   selectedResponseType = signal<ResponseType>(ResponseType.ACK);
 
   selectedFile = signal<File | null>(null);
   isDragOver = signal(false);
+
   isProcessing = signal(false);
   processedResult = signal<ProcessingResponse | null>(null);
   errorMessage = signal<string | null>(null);
 
+  // Computed: Check if file input should be disabled
+  isFileInputDisabled = computed(() => {
+    return this.selectedResponseType() === ResponseType.GETSCHEMA;
+  });
+
+  // Computed: Check if process button should be disabled
+  isProcessDisabled = computed(() => {
+    // If GetSchema, don't need file - always enabled
+    if (this.selectedResponseType() === ResponseType.GETSCHEMA) {
+      return false;
+    }
+    // For other types, need a file
+    return !this.selectedFile();
+  });
+
   onDragOver(event: DragEvent): void {
+    if (this.isFileInputDisabled()) return;
     event.preventDefault();
     event.stopPropagation();
     this.isDragOver.set(true);
@@ -55,6 +75,7 @@ export class DashboardComponent {
   }
 
   onDrop(event: DragEvent): void {
+    if (this.isFileInputDisabled()) return;
     event.preventDefault();
     event.stopPropagation();
     this.isDragOver.set(false);
@@ -67,6 +88,7 @@ export class DashboardComponent {
   }
 
   onFileSelected(event: Event): void {
+    if (this.isFileInputDisabled()) return;
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
       this.selectedFile.set(input.files[0]);
@@ -80,9 +102,21 @@ export class DashboardComponent {
     this.errorMessage.set(null);
   }
 
+  // Clear file when switching to GetSchema
+  onResponseTypeChange(value: string): void {
+    this.selectedResponseType.set(value as ResponseType);
+    if (value === ResponseType.GETSCHEMA) {
+      this.selectedFile.set(null);
+    }
+  }
+
   processFile(): void {
+    const isGetSchema = this.selectedResponseType() === ResponseType.GETSCHEMA;
     const file = this.selectedFile();
-    if (!file) return;
+    
+    // For non-GetSchema, require file
+    if (!isGetSchema && !file) return;
+
     this.isProcessing.set(true);
     this.errorMessage.set(null);
 
@@ -92,17 +126,32 @@ export class DashboardComponent {
       responseType: this.selectedResponseType()
     };
 
-    this.fileService.processFileSimulated(formData, file).subscribe({
-      next: (response) => {
-        this.processedResult.set(response);
-        this.isProcessing.set(false);
-        this.selectedFile.set(null);
-      },
-      error: (error) => {
-        this.errorMessage.set(error.message || 'Processing failed');
-        this.isProcessing.set(false);
-      }
-    });
+    if (isGetSchema) {
+      // GetSchema doesn't need a file
+      this.fileService.getSchema(formData).subscribe({
+        next: (response) => {
+          this.processedResult.set(response);
+          this.isProcessing.set(false);
+        },
+        error: (error) => {
+          this.errorMessage.set(error.message || 'Failed to get schema');
+          this.isProcessing.set(false);
+        }
+      });
+    } else {
+      // Normal file processing
+      this.fileService.processFileSimulated(formData, file!).subscribe({
+        next: (response) => {
+          this.processedResult.set(response);
+          this.isProcessing.set(false);
+          this.selectedFile.set(null);
+        },
+        error: (error) => {
+          this.errorMessage.set(error.message || 'Processing failed');
+          this.isProcessing.set(false);
+        }
+      });
+    }
   }
 
   downloadOutput(): void {
