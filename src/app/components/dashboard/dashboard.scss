@@ -1,211 +1,596 @@
-import { Component, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { AuthService } from '../../services/auth';
-import { FileProcessingService } from '../../services/file-processing';
-import { 
-  ProcessingResponse, 
-  DashboardFormData,
-  TransactionType,
-  OrderType,
-  FormatType,
-  ResponseType
-} from '../../models/interfaces';
+// Dashboard Styles
+.dashboard-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+  display: flex;
+  flex-direction: column;
+}
 
-@Component({
-  selector: 'app-dashboard',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './dashboard.html',
-  styleUrl: './dashboard.scss'
-})
-export class DashboardComponent {
-  private router = inject(Router);
-  authService = inject(AuthService);
-  private fileService = inject(FileProcessingService);
+// Header Styles
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: white;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 
-  // Enum references for template
-  TransactionType = TransactionType;
-  OrderType = OrderType;
-  FormatType = FormatType;
-  ResponseType = ResponseType;
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
 
-  // Dropdown options
-  transactionTypes = Object.values(TransactionType);
-  orderTypes = Object.values(OrderType);
-  formats = Object.values(FormatType);
-  responseTypes = Object.values(ResponseType);
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
 
-  // Selected values using enums
-  selectedTransactionType = signal<TransactionType>(TransactionType.ORDER);
-  selectedOrderType = signal<OrderType>(OrderType.PURCHASE_ORDER);
-  selectedFormat = signal<FormatType>(FormatType.EDI);
-  selectedResponseType = signal<ResponseType>(ResponseType.ACK);
-
-  selectedFile = signal<File | null>(null);
-  isDragOver = signal(false);
-
-  isProcessing = signal(false);
-  processedResult = signal<ProcessingResponse | null>(null);
-  errorMessage = signal<string | null>(null);
-
-  // Computed: Show ORDER TYPE dropdown only when Transaction Type is ORDER
-  showOrderType = computed(() => {
-    return this.selectedTransactionType() === TransactionType.ORDER;
-  });
-
-  // Computed: Check if file input should be disabled (for GETSCHEMA)
-  isFileInputDisabled = computed(() => {
-    return this.selectedResponseType() === ResponseType.GETSCHEMA;
-  });
-
-  // Computed: Check if process button should be disabled
-  isProcessDisabled = computed(() => {
-    // If GETSCHEMA, don't need file - always enabled
-    if (this.selectedResponseType() === ResponseType.GETSCHEMA) {
-      return false;
+      svg {
+        width: 24px;
+        height: 24px;
+        color: white;
+      }
     }
-    // For other types, need a file
-    return !this.selectedFile();
-  });
 
-  // Handle Transaction Type change
-  onTransactionTypeChange(value: string): void {
-    this.selectedTransactionType.set(value as TransactionType);
-    // Reset ORDER TYPE to default when switching to ORDER
-    if (value === TransactionType.ORDER) {
-      this.selectedOrderType.set(OrderType.PURCHASE_ORDER);
+    .logo-text {
+      h1 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin: 0;
+      }
+
+      span {
+        font-size: 0.75rem;
+        color: #6b7280;
+      }
     }
   }
 
-  onDragOver(event: DragEvent): void {
-    if (this.isFileInputDisabled()) return;
-    event.preventDefault();
-    event.stopPropagation();
-    this.isDragOver.set(true);
-  }
+  .user-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
 
-  onDragLeave(event: DragEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.isDragOver.set(false);
-  }
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
 
-  onDrop(event: DragEvent): void {
-    if (this.isFileInputDisabled()) return;
-    event.preventDefault();
-    event.stopPropagation();
-    this.isDragOver.set(false);
-    const files = event.dataTransfer?.files;
-    if (files && files.length > 0) {
-      this.selectedFile.set(files[0]);
-      this.processedResult.set(null);
-      this.errorMessage.set(null);
+    .user-name {
+      font-weight: 500;
+      color: #1a1a2e;
+    }
+
+    .logout-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      color: #6b7280;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      &:hover {
+        background: #f3f4f6;
+        color: #1a1a2e;
+      }
     }
   }
+}
 
-  onFileSelected(event: Event): void {
-    if (this.isFileInputDisabled()) return;
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      this.selectedFile.set(input.files[0]);
-      this.processedResult.set(null);
-      this.errorMessage.set(null);
-    }
+// Main Content
+.dashboard-main {
+  flex: 1;
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
   }
+}
 
-  removeFile(): void {
-    this.selectedFile.set(null);
-    this.errorMessage.set(null);
-  }
+// Panel Styles
+.config-panel,
+.upload-panel,
+.output-section {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
 
-  // Clear file when switching to GETSCHEMA
-  onResponseTypeChange(value: string): void {
-    this.selectedResponseType.set(value as ResponseType);
-    if (value === ResponseType.GETSCHEMA) {
-      this.selectedFile.set(null);
-    }
-  }
-
-  /**
-   * Process button click handler
-   * Builds JSON request and sends to backend
-   */
-  processFile(): void {
-    const isGetSchema = this.selectedResponseType() === ResponseType.GETSCHEMA;
-    const file = this.selectedFile();
+// Disabled panel state
+.upload-panel.disabled {
+  opacity: 0.6;
+  
+  .upload-zone {
+    cursor: not-allowed;
+    background: #f5f5f5;
+    border-color: #d1d5db;
     
-    // For non-GETSCHEMA, require file
-    if (!isGetSchema && !file) return;
-
-    this.isProcessing.set(true);
-    this.errorMessage.set(null);
-
-    // Build form data for request
-    const formData: DashboardFormData = {
-      transactionType: this.selectedTransactionType(),
-      format: this.selectedFormat(),
-      responseType: this.selectedResponseType()
-    };
-
-    // Add ORDER TYPE only if Transaction Type is ORDER
-    if (this.selectedTransactionType() === TransactionType.ORDER) {
-      formData.orderType = this.selectedOrderType();
+    &:hover {
+      border-color: #d1d5db;
+      background: #f5f5f5;
     }
+  }
+}
 
-    if (isGetSchema) {
-      // GETSCHEMA - no file needed
-      this.fileService.getSchemaSimulated(formData).subscribe({
-        next: (response) => {
-          this.processedResult.set(response);
-          this.isProcessing.set(false);
-        },
-        error: (error) => {
-          this.errorMessage.set(error.message || 'Failed to get schema');
-          this.isProcessing.set(false);
-        }
-      });
-    } else {
-      // File processing - includes Input File
-      this.fileService.processFileSimulated(formData, file!).subscribe({
-        next: (response) => {
-          this.processedResult.set(response);
-          this.isProcessing.set(false);
-          this.selectedFile.set(null); // Clear input after success
-        },
-        error: (error) => {
-          this.errorMessage.set(error.message || 'Processing failed');
-          this.isProcessing.set(false);
-        }
-      });
+.panel-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+
+  svg {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    color: #667eea;
+  }
+
+  h2 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin: 0;
+  }
+
+  .disabled-badge {
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: #6b7280;
+    background: #f3f4f6;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+  }
+}
+
+// Config Form
+.config-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.form-group {
+  label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+  }
+
+  select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 1rem;
+    color: #1a1a2e;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
   }
 
-  downloadOutput(): void {
-    const result = this.processedResult();
-    if (!result) return;
-    
-    const byteCharacters = atob(result.content);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
+  // Special styling for ORDER TYPE dropdown
+  &.order-type-group {
+    animation: slideDown 0.3s ease-out;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+    padding: 1rem;
+    border-radius: 10px;
+    margin: 0.25rem 0;
+
+    label {
+      color: #667eea;
     }
-    const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: result.mimeType });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = result.filename;
-    link.click();
-    window.URL.revokeObjectURL(url);
-    
-    // Clear output after download
-    this.processedResult.set(null);
+
+    select {
+      border-color: rgba(102, 126, 234, 0.3);
+      
+      &:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+      }
+    }
+  }
+}
+
+// Animation for ORDER TYPE appearing
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Upload Zone
+.upload-zone {
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.3s;
+  margin-bottom: 1rem;
+  min-height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &.drag-over {
+    border-color: #667eea;
+    background: rgba(102, 126, 234, 0.05);
   }
 
-  logout(): void {
-    this.authService.logout();
-    this.router.navigate(['/login']);
+  &.has-file {
+    border-style: solid;
+    border-color: #10b981;
+    background: rgba(16, 185, 129, 0.05);
+  }
+
+  &.disabled {
+    pointer-events: none;
+    
+    .upload-placeholder {
+      svg {
+        color: #d1d5db;
+      }
+      
+      p, span {
+        color: #9ca3af;
+      }
+    }
+  }
+}
+
+.upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+
+  svg {
+    width: 48px;
+    height: 48px;
+    color: #9ca3af;
+  }
+
+  p {
+    color: #6b7280;
+    margin: 0;
+  }
+
+  span {
+    color: #9ca3af;
+    font-size: 0.875rem;
+  }
+
+  &.disabled {
+    svg {
+      color: #d1d5db;
+    }
+    
+    p {
+      color: #9ca3af;
+      font-weight: 500;
+    }
+  }
+}
+
+.browse-btn {
+  display: inline-block;
+  padding: 0.5rem 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  }
+
+  input {
+    display: none;
+  }
+}
+
+// File Preview
+.file-preview {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 0.5rem;
+
+  .file-icon {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    background: rgba(16, 185, 129, 0.1);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    svg {
+      width: 24px;
+      height: 24px;
+      color: #10b981;
+    }
+  }
+
+  .file-info {
+    flex: 1;
+    text-align: left;
+
+    .file-name {
+      display: block;
+      font-weight: 500;
+      color: #1a1a2e;
+      word-break: break-all;
+    }
+
+    .file-size {
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+  }
+
+  .remove-file {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    border: none;
+    background: #fee2e2;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+
+    svg {
+      width: 16px;
+      height: 16px;
+      color: #ef4444;
+    }
+
+    &:hover {
+      background: #fecaca;
+    }
+  }
+}
+
+// Process Button
+.process-btn {
+  width: 100%;
+  padding: 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.3s;
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Output Section
+.output-section {
+  .empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: #9ca3af;
+
+    p {
+      margin: 0;
+    }
+  }
+
+  .error-message {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    color: #dc2626;
+
+    svg {
+      width: 20px;
+      height: 20px;
+      min-width: 20px;
+    }
+  }
+}
+
+// Result Card
+.result-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 12px;
+
+  .result-icon {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    background: rgba(16, 185, 129, 0.2);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    svg {
+      width: 24px;
+      height: 24px;
+      color: #10b981;
+    }
+  }
+
+  .result-info {
+    flex: 1;
+
+    .result-name {
+      display: block;
+      font-weight: 500;
+      color: #1a1a2e;
+      word-break: break-all;
+    }
+
+    .result-status {
+      font-size: 0.875rem;
+      color: #10b981;
+    }
+  }
+
+  .result-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+}
+
+.download-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    background: #059669;
+  }
+}
+
+// Responsive
+@media (max-width: 640px) {
+  .dashboard-header {
+    padding: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+
+    .logo .logo-text h1 {
+      font-size: 1rem;
+    }
+
+    .user-section {
+      .user-name {
+        display: none;
+      }
+    }
+  }
+
+  .dashboard-main {
+    padding: 1rem;
+  }
+
+  .result-card {
+    flex-direction: column;
+    text-align: center;
+
+    .result-actions {
+      width: 100%;
+      justify-content: center;
+    }
   }
 }
