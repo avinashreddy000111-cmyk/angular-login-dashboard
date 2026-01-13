@@ -8,6 +8,7 @@ import {
   ProcessingResponse, 
   DashboardFormData,
   TransactionType,
+  OrderType,
   FormatType,
   ResponseType
 } from '../../models/interfaces';
@@ -26,16 +27,19 @@ export class DashboardComponent {
 
   // Enum references for template
   TransactionType = TransactionType;
+  OrderType = OrderType;
   FormatType = FormatType;
   ResponseType = ResponseType;
 
   // Dropdown options
   transactionTypes = Object.values(TransactionType);
+  orderTypes = Object.values(OrderType);
   formats = Object.values(FormatType);
   responseTypes = Object.values(ResponseType);
 
   // Selected values using enums
   selectedTransactionType = signal<TransactionType>(TransactionType.ORDER);
+  selectedOrderType = signal<OrderType>(OrderType.PURCHASE_ORDER);
   selectedFormat = signal<FormatType>(FormatType.EDI);
   selectedResponseType = signal<ResponseType>(ResponseType.ACK);
 
@@ -45,6 +49,11 @@ export class DashboardComponent {
   isProcessing = signal(false);
   processedResult = signal<ProcessingResponse | null>(null);
   errorMessage = signal<string | null>(null);
+
+  // Computed: Show ORDER TYPE dropdown only when Transaction Type is ORDER
+  showOrderType = computed(() => {
+    return this.selectedTransactionType() === TransactionType.ORDER;
+  });
 
   // Computed: Check if file input should be disabled (for GETSCHEMA)
   isFileInputDisabled = computed(() => {
@@ -60,6 +69,15 @@ export class DashboardComponent {
     // For other types, need a file
     return !this.selectedFile();
   });
+
+  // Handle Transaction Type change
+  onTransactionTypeChange(value: string): void {
+    this.selectedTransactionType.set(value as TransactionType);
+    // Reset ORDER TYPE to default when switching to ORDER
+    if (value === TransactionType.ORDER) {
+      this.selectedOrderType.set(OrderType.PURCHASE_ORDER);
+    }
+  }
 
   onDragOver(event: DragEvent): void {
     if (this.isFileInputDisabled()) return;
@@ -112,15 +130,7 @@ export class DashboardComponent {
 
   /**
    * Process button click handler
-   * Builds JSON request and sends to backend:
-   * {
-   *   "Request": {
-   *     "TRANSACTION TYPE": "ORDER",
-   *     "FORMAT": "EDI",
-   *     "RESPONSE TYPE": "ACK",
-   *     "Input File": "base64_content" (only if file uploaded)
-   *   }
-   * }
+   * Builds JSON request and sends to backend
    */
   processFile(): void {
     const isGetSchema = this.selectedResponseType() === ResponseType.GETSCHEMA;
@@ -139,9 +149,13 @@ export class DashboardComponent {
       responseType: this.selectedResponseType()
     };
 
+    // Add ORDER TYPE only if Transaction Type is ORDER
+    if (this.selectedTransactionType() === TransactionType.ORDER) {
+      formData.orderType = this.selectedOrderType();
+    }
+
     if (isGetSchema) {
       // GETSCHEMA - no file needed
-      // Request: { "Request": { "TRANSACTION TYPE": "...", "FORMAT": "...", "RESPONSE TYPE": "GETSCHEMA" } }
       this.fileService.getSchemaSimulated(formData).subscribe({
         next: (response) => {
           this.processedResult.set(response);
@@ -154,7 +168,6 @@ export class DashboardComponent {
       });
     } else {
       // File processing - includes Input File
-      // Request: { "Request": { "TRANSACTION TYPE": "...", "FORMAT": "...", "RESPONSE TYPE": "...", "Input File": "base64..." } }
       this.fileService.processFileSimulated(formData, file!).subscribe({
         next: (response) => {
           this.processedResult.set(response);
