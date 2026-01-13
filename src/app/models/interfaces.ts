@@ -1,5 +1,4 @@
 // src/app/models/interfaces.ts
-
 export interface UserCredentials {
   username: string;
   password: string;
@@ -24,7 +23,8 @@ export enum FormatType {
 export enum ResponseType {
   ACK = 'ACK',
   SHIPCONF = 'SHIPCONF',
-  RECEIPT = 'RECEIPT'
+  RECEIPT = 'RECEIPT',
+  GETSCHEMA = 'GETSCHEMA'  // New option added
 }
 
 export interface DashboardFormData {
