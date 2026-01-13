@@ -46,14 +46,14 @@ export class DashboardComponent {
   processedResult = signal<ProcessingResponse | null>(null);
   errorMessage = signal<string | null>(null);
 
-  // Computed: Check if file input should be disabled
+  // Computed: Check if file input should be disabled (for GETSCHEMA)
   isFileInputDisabled = computed(() => {
     return this.selectedResponseType() === ResponseType.GETSCHEMA;
   });
 
   // Computed: Check if process button should be disabled
   isProcessDisabled = computed(() => {
-    // If GetSchema, don't need file - always enabled
+    // If GETSCHEMA, don't need file - always enabled
     if (this.selectedResponseType() === ResponseType.GETSCHEMA) {
       return false;
     }
@@ -102,7 +102,7 @@ export class DashboardComponent {
     this.errorMessage.set(null);
   }
 
-  // Clear file when switching to GetSchema
+  // Clear file when switching to GETSCHEMA
   onResponseTypeChange(value: string): void {
     this.selectedResponseType.set(value as ResponseType);
     if (value === ResponseType.GETSCHEMA) {
@@ -110,16 +110,29 @@ export class DashboardComponent {
     }
   }
 
+  /**
+   * Process button click handler
+   * Builds JSON request and sends to backend:
+   * {
+   *   "Request": {
+   *     "TRANSACTION TYPE": "ORDER",
+   *     "FORMAT": "EDI",
+   *     "RESPONSE TYPE": "ACK",
+   *     "Input File": "base64_content" (only if file uploaded)
+   *   }
+   * }
+   */
   processFile(): void {
     const isGetSchema = this.selectedResponseType() === ResponseType.GETSCHEMA;
     const file = this.selectedFile();
     
-    // For non-GetSchema, require file
+    // For non-GETSCHEMA, require file
     if (!isGetSchema && !file) return;
 
     this.isProcessing.set(true);
     this.errorMessage.set(null);
 
+    // Build form data for request
     const formData: DashboardFormData = {
       transactionType: this.selectedTransactionType(),
       format: this.selectedFormat(),
@@ -127,8 +140,9 @@ export class DashboardComponent {
     };
 
     if (isGetSchema) {
-      // GetSchema doesn't need a file
-      this.fileService.getSchema(formData).subscribe({
+      // GETSCHEMA - no file needed
+      // Request: { "Request": { "TRANSACTION TYPE": "...", "FORMAT": "...", "RESPONSE TYPE": "GETSCHEMA" } }
+      this.fileService.getSchemaSimulated(formData).subscribe({
         next: (response) => {
           this.processedResult.set(response);
           this.isProcessing.set(false);
@@ -139,12 +153,13 @@ export class DashboardComponent {
         }
       });
     } else {
-      // Normal file processing
+      // File processing - includes Input File
+      // Request: { "Request": { "TRANSACTION TYPE": "...", "FORMAT": "...", "RESPONSE TYPE": "...", "Input File": "base64..." } }
       this.fileService.processFileSimulated(formData, file!).subscribe({
         next: (response) => {
           this.processedResult.set(response);
           this.isProcessing.set(false);
-          this.selectedFile.set(null);
+          this.selectedFile.set(null); // Clear input after success
         },
         error: (error) => {
           this.errorMessage.set(error.message || 'Processing failed');
@@ -157,6 +172,7 @@ export class DashboardComponent {
   downloadOutput(): void {
     const result = this.processedResult();
     if (!result) return;
+    
     const byteCharacters = atob(result.content);
     const byteNumbers = new Array(byteCharacters.length);
     for (let i = 0; i < byteCharacters.length; i++) {
@@ -170,6 +186,8 @@ export class DashboardComponent {
     link.download = result.filename;
     link.click();
     window.URL.revokeObjectURL(url);
+    
+    // Clear output after download
     this.processedResult.set(null);
   }
 
