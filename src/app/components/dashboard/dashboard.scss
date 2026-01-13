@@ -133,6 +133,22 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
+// Disabled panel state
+.upload-panel.disabled {
+  opacity: 0.6;
+  
+  .upload-zone {
+    cursor: not-allowed;
+    background: #f5f5f5;
+    border-color: #d1d5db;
+    
+    &:hover {
+      border-color: #d1d5db;
+      background: #f5f5f5;
+    }
+  }
+}
+
 .panel-header {
   display: flex;
   align-items: center;
@@ -153,6 +169,15 @@
     font-weight: 600;
     color: #1a1a2e;
     margin: 0;
+  }
+
+  .disabled-badge {
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: #6b7280;
+    background: #f3f4f6;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
   }
 }
 
@@ -216,6 +241,20 @@
     border-color: #10b981;
     background: rgba(16, 185, 129, 0.05);
   }
+
+  &.disabled {
+    pointer-events: none;
+    
+    .upload-placeholder {
+      svg {
+        color: #d1d5db;
+      }
+      
+      p, span {
+        color: #9ca3af;
+      }
+    }
+  }
 }
 
 .upload-placeholder {
@@ -238,6 +277,17 @@
   span {
     color: #9ca3af;
     font-size: 0.875rem;
+  }
+
+  &.disabled {
+    svg {
+      color: #d1d5db;
+    }
+    
+    p {
+      color: #9ca3af;
+      font-weight: 500;
+    }
   }
 }
 
