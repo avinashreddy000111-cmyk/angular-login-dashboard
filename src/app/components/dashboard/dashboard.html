@@ -42,15 +42,29 @@
         </div>
 
         <div class="config-form">
+          <!-- Transaction Type -->
           <div class="form-group">
             <label>Transaction Type</label>
-            <select [ngModel]="selectedTransactionType()" (ngModelChange)="selectedTransactionType.set($event)">
+            <select [ngModel]="selectedTransactionType()" (ngModelChange)="onTransactionTypeChange($event)">
               @for (type of transactionTypes; track type) {
                 <option [value]="type">{{ type }}</option>
               }
             </select>
           </div>
 
+          <!-- ORDER TYPE - Only shown when Transaction Type is ORDER -->
+          @if (showOrderType()) {
+            <div class="form-group order-type-group">
+              <label>Order Type</label>
+              <select [ngModel]="selectedOrderType()" (ngModelChange)="selectedOrderType.set($event)">
+                @for (type of orderTypes; track type) {
+                  <option [value]="type">{{ type.replace('_', ' ') }}</option>
+                }
+              </select>
+            </div>
+          }
+
+          <!-- Format -->
           <div class="form-group">
             <label>Format</label>
             <select [ngModel]="selectedFormat()" (ngModelChange)="selectedFormat.set($event)">
@@ -60,6 +74,7 @@
             </select>
           </div>
 
+          <!-- Response Type -->
           <div class="form-group">
             <label>Response Type</label>
             <select [ngModel]="selectedResponseType()" (ngModelChange)="onResponseTypeChange($event)">
