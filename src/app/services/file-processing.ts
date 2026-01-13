@@ -6,6 +6,7 @@ import {
   DashboardFormData,
   BackendRequest,
   TransactionType,
+  OrderType,
   FormatType,
   ResponseType
 } from '../models/interfaces';
@@ -32,10 +33,21 @@ export class FileProcessingService {
   /**
    * Build the JSON request object based on dashboard selections
    * 
-   * Output format:
+   * When Transaction Type is ORDER:
    * {
    *   "Request": {
    *     "TRANSACTION TYPE": "ORDER",
+   *     "ORDER TYPE": "PURCHASE_ORDER",
+   *     "FORMAT": "EDI",
+   *     "RESPONSE TYPE": "ACK",
+   *     "Input File": "base64_content" (optional)
+   *   }
+   * }
+   * 
+   * When Transaction Type is ASN:
+   * {
+   *   "Request": {
+   *     "TRANSACTION TYPE": "ASN",
    *     "FORMAT": "EDI",
    *     "RESPONSE TYPE": "ACK",
    *     "Input File": "base64_content" (optional)
@@ -45,15 +57,20 @@ export class FileProcessingService {
   private buildRequest(formData: DashboardFormData, fileContent?: string): BackendRequest {
     const request: BackendRequest = {
       Request: {
-        'TRANSACTION_TYPE': formData.transactionType,
+        'TRANSACTION TYPE': formData.transactionType,
         'FORMAT': formData.format,
-        'RESPONSE_TYPE': formData.responseType
+        'RESPONSE TYPE': formData.responseType
       }
     };
 
+    // Add ORDER TYPE only if Transaction Type is ORDER
+    if (formData.transactionType === TransactionType.ORDER && formData.orderType) {
+      request.Request['ORDER TYPE'] = formData.orderType;
+    }
+
     // Only add Input File if content exists
     if (fileContent) {
-      request.Request['Input_File'] = fileContent;
+      request.Request['Input File'] = fileContent;
     }
 
     return request;
@@ -219,7 +236,7 @@ IEA*1*${controlNumber}~`;
   }
 
   private generateJsonContent(formData: DashboardFormData): string {
-    return JSON.stringify({
+    const response: any = {
       header: {
         messageType: formData.responseType,
         transactionType: formData.transactionType,
@@ -230,21 +247,36 @@ IEA*1*${controlNumber}~`;
         status: "SUCCESS",
         message: "Transaction processed successfully"
       }
-    }, null, 2);
+    };
+
+    // Add orderType if present
+    if (formData.orderType) {
+      response.header.orderType = formData.orderType;
+    }
+
+    return JSON.stringify(response, null, 2);
   }
 
   private generateEdiSchema(formData: DashboardFormData): string {
-    return `EDI Schema for ${formData.transactionType}
+    let schema = `EDI Schema for ${formData.transactionType}
 ========================================
 Format: EDI X12 004010
 Transaction Type: ${formData.transactionType}
+`;
 
+    if (formData.orderType) {
+      schema += `Order Type: ${formData.orderType}
+`;
+    }
+
+    schema += `
 Segments: ISA, GS, ST, SE, GE, IEA
 `;
+    return schema;
   }
 
   private generateJsonSchema(formData: DashboardFormData): string {
-    return JSON.stringify({
+    const schema: any = {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": `${formData.transactionType} Schema`,
       "type": "object",
@@ -252,6 +284,13 @@ Segments: ISA, GS, ST, SE, GE, IEA
         "transactionType": { "type": "string", "enum": [formData.transactionType] },
         "format": { "type": "string", "enum": [formData.format] }
       }
-    }, null, 2);
+    };
+
+    // Add orderType to schema if present
+    if (formData.orderType) {
+      schema.properties.orderType = { "type": "string", "enum": [formData.orderType] };
+    }
+
+    return JSON.stringify(schema, null, 2);
   }
 }
