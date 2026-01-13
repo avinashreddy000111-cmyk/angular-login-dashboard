@@ -39,7 +39,7 @@ export class DashboardComponent {
 
   // Selected values using enums
   selectedTransactionType = signal<TransactionType>(TransactionType.ORDER);
-  selectedOrderType = signal<OrderType>(OrderType.PURCHASE_ORDER);
+  selectedOrderType = signal<OrderType>(OrderType.LTL);;
   selectedFormat = signal<FormatType>(FormatType.EDI);
   selectedResponseType = signal<ResponseType>(ResponseType.ACK);
 
