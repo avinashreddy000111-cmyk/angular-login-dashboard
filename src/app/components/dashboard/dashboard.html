@@ -1,596 +1,228 @@
-// Dashboard Styles
-.dashboard-container {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
-  display: flex;
-  flex-direction: column;
-}
+<div class="dashboard-container">
+  <!-- Header -->
+  <header class="dashboard-header">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+          <path d="M2 17l10 5 10-5"/>
+          <path d="M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <div class="logo-text">
+        <h1>Sandbox</h1>
+        <span>Transform your files</span>
+      </div>
+    </div>
+    <div class="user-section">
+      <div class="user-avatar">A</div>
+      <span class="user-name">admin</span>
+      <button class="logout-btn" (click)="logout()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        Logout
+      </button>
+    </div>
+  </header>
 
-// Header Styles
-.dashboard-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 2rem;
-  background: white;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  <!-- Main Content -->
+  <main class="dashboard-main">
+    <div class="content-grid">
+      <!-- Configuration Panel -->
+      <section class="config-panel">
+        <div class="panel-header">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          <h2>Configuration</h2>
+        </div>
 
-  .logo {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
+        <div class="config-form">
+          <!-- Transaction Type -->
+          <div class="form-group">
+            <label>Transaction Type</label>
+            <select [ngModel]="selectedTransactionType()" (ngModelChange)="onTransactionTypeChange($event)">
+              @for (type of transactionTypes; track type) {
+                <option [value]="type">{{ type }}</option>
+              }
+            </select>
+          </div>
 
-    .logo-icon {
-      width: 40px;
-      height: 40px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+          <!-- ORDER TYPE - Only shown when Transaction Type is ORDER -->
+          @if (showOrderType()) {
+            <div class="form-group order-type-group">
+              <label>Order Type</label>
+              <select [ngModel]="selectedOrderType()" (ngModelChange)="selectedOrderType.set($event)">
+                @for (type of orderTypes; track type) {
+                  <option [value]="type">{{ type.replace('_', ' ') }}</option>
+                }
+              </select>
+            </div>
+          }
 
-      svg {
-        width: 24px;
-        height: 24px;
-        color: white;
+          <!-- Format -->
+          <div class="form-group">
+            <label>Format</label>
+            <select [ngModel]="selectedFormat()" (ngModelChange)="selectedFormat.set($event)">
+              @for (format of formats; track format) {
+                <option [value]="format">{{ format }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Response Type -->
+          <div class="form-group">
+            <label>Response Type</label>
+            <select [ngModel]="selectedResponseType()" (ngModelChange)="onResponseTypeChange($event)">
+              @for (type of responseTypes; track type) {
+                <option [value]="type">{{ type }}</option>
+              }
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- Upload Panel -->
+      <section class="upload-panel" [class.disabled]="isFileInputDisabled()">
+        <div class="panel-header">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <h2>Input File</h2>
+          @if (isFileInputDisabled()) {
+            <span class="disabled-badge">Not required for GETSCHEMA</span>
+          }
+        </div>
+
+        <!-- Upload Zone -->
+        <div 
+          class="upload-zone"
+          [class.drag-over]="isDragOver()"
+          [class.has-file]="selectedFile()"
+          [class.disabled]="isFileInputDisabled()"
+          (dragover)="onDragOver($event)"
+          (dragleave)="onDragLeave($event)"
+          (drop)="onDrop($event)">
+          
+          @if (selectedFile()) {
+            <div class="file-preview">
+              <div class="file-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                </svg>
+              </div>
+              <div class="file-info">
+                <span class="file-name">{{ selectedFile()?.name }}</span>
+                <span class="file-size">{{ (selectedFile()?.size || 0) / 1024 | number:'1.1-1' }} KB</span>
+              </div>
+              <button class="remove-file" (click)="removeFile()">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+          } @else {
+            <div class="upload-placeholder" [class.disabled]="isFileInputDisabled()">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              @if (isFileInputDisabled()) {
+                <p>File upload disabled</p>
+                <span>GETSCHEMA does not require a file</span>
+              } @else {
+                <p>Drag & drop your file here</p>
+                <span>or</span>
+                <label class="browse-btn">
+                  Browse Files
+                  <input type="file" (change)="onFileSelected($event)" hidden>
+                </label>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Process Button -->
+        <button 
+          class="process-btn" 
+          [disabled]="isProcessDisabled() || isProcessing()"
+          (click)="processFile()">
+          @if (isProcessing()) {
+            <span class="spinner"></span>
+            Processing...
+          } @else {
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+            @if (isFileInputDisabled()) {
+              Get Schema
+            } @else {
+              Process File
+            }
+          }
+        </button>
+      </section>
+    </div>
+
+    <!-- Output Section -->
+    <section class="output-section">
+      <div class="panel-header">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        <h2>Output</h2>
+      </div>
+
+      @if (errorMessage()) {
+        <div class="error-message">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          {{ errorMessage() }}
+        </div>
+      } @else if (processedResult()) {
+        <div class="result-card">
+          <div class="result-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+          </div>
+          <div class="result-info">
+            <span class="result-name">{{ processedResult()?.filename }}</span>
+            <span class="result-status">Ready for download</span>
+          </div>
+          <div class="result-actions">
+            <button class="download-btn" (click)="downloadOutput()">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Download
+            </button>
+          </div>
+        </div>
+      } @else {
+        <div class="empty-state">
+          <p>Processed files will appear here</p>
+        </div>
       }
-    }
-
-    .logo-text {
-      h1 {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: #1a1a2e;
-        margin: 0;
-      }
-
-      span {
-        font-size: 0.75rem;
-        color: #6b7280;
-      }
-    }
-  }
-
-  .user-section {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-
-    .user-avatar {
-      width: 36px;
-      height: 36px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: 600;
-      font-size: 0.875rem;
-    }
-
-    .user-name {
-      font-weight: 500;
-      color: #1a1a2e;
-    }
-
-    .logout-btn {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem 1rem;
-      background: transparent;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      color: #6b7280;
-      cursor: pointer;
-      transition: all 0.2s;
-
-      svg {
-        width: 18px;
-        height: 18px;
-      }
-
-      &:hover {
-        background: #f3f4f6;
-        color: #1a1a2e;
-      }
-    }
-  }
-}
-
-// Main Content
-.dashboard-main {
-  flex: 1;
-  padding: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.content-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-  margin-bottom: 2rem;
-
-  @media (max-width: 900px) {
-    grid-template-columns: 1fr;
-  }
-}
-
-// Panel Styles
-.config-panel,
-.upload-panel,
-.output-section {
-  background: white;
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-}
-
-// Disabled panel state
-.upload-panel.disabled {
-  opacity: 0.6;
-  
-  .upload-zone {
-    cursor: not-allowed;
-    background: #f5f5f5;
-    border-color: #d1d5db;
-    
-    &:hover {
-      border-color: #d1d5db;
-      background: #f5f5f5;
-    }
-  }
-}
-
-.panel-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #e5e7eb;
-
-  svg {
-    width: 24px;
-    height: 24px;
-    min-width: 24px;
-    color: #667eea;
-  }
-
-  h2 {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: #1a1a2e;
-    margin: 0;
-  }
-
-  .disabled-badge {
-    margin-left: auto;
-    font-size: 0.75rem;
-    color: #6b7280;
-    background: #f3f4f6;
-    padding: 0.25rem 0.75rem;
-    border-radius: 12px;
-  }
-}
-
-// Config Form
-.config-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.form-group {
-  label {
-    display: block;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #6b7280;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 0.5rem;
-  }
-
-  select {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    font-size: 1rem;
-    color: #1a1a2e;
-    background: white;
-    cursor: pointer;
-    transition: all 0.2s;
-
-    &:focus {
-      outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-  }
-
-  // Special styling for ORDER TYPE dropdown
-  &.order-type-group {
-    animation: slideDown 0.3s ease-out;
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
-    padding: 1rem;
-    border-radius: 10px;
-    margin: 0.25rem 0;
-
-    label {
-      color: #667eea;
-    }
-
-    select {
-      border-color: rgba(102, 126, 234, 0.3);
-      
-      &:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
-      }
-    }
-  }
-}
-
-// Animation for ORDER TYPE appearing
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-// Upload Zone
-.upload-zone {
-  border: 2px dashed #d1d5db;
-  border-radius: 12px;
-  padding: 2rem;
-  text-align: center;
-  transition: all 0.3s;
-  margin-bottom: 1rem;
-  min-height: 150px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  &.drag-over {
-    border-color: #667eea;
-    background: rgba(102, 126, 234, 0.05);
-  }
-
-  &.has-file {
-    border-style: solid;
-    border-color: #10b981;
-    background: rgba(16, 185, 129, 0.05);
-  }
-
-  &.disabled {
-    pointer-events: none;
-    
-    .upload-placeholder {
-      svg {
-        color: #d1d5db;
-      }
-      
-      p, span {
-        color: #9ca3af;
-      }
-    }
-  }
-}
-
-.upload-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-
-  svg {
-    width: 48px;
-    height: 48px;
-    color: #9ca3af;
-  }
-
-  p {
-    color: #6b7280;
-    margin: 0;
-  }
-
-  span {
-    color: #9ca3af;
-    font-size: 0.875rem;
-  }
-
-  &.disabled {
-    svg {
-      color: #d1d5db;
-    }
-    
-    p {
-      color: #9ca3af;
-      font-weight: 500;
-    }
-  }
-}
-
-.browse-btn {
-  display: inline-block;
-  padding: 0.5rem 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: transform 0.2s, box-shadow 0.2s;
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-  }
-
-  input {
-    display: none;
-  }
-}
-
-// File Preview
-.file-preview {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  width: 100%;
-  padding: 0.5rem;
-
-  .file-icon {
-    width: 48px;
-    height: 48px;
-    min-width: 48px;
-    background: rgba(16, 185, 129, 0.1);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    svg {
-      width: 24px;
-      height: 24px;
-      color: #10b981;
-    }
-  }
-
-  .file-info {
-    flex: 1;
-    text-align: left;
-
-    .file-name {
-      display: block;
-      font-weight: 500;
-      color: #1a1a2e;
-      word-break: break-all;
-    }
-
-    .file-size {
-      font-size: 0.875rem;
-      color: #6b7280;
-    }
-  }
-
-  .remove-file {
-    width: 32px;
-    height: 32px;
-    min-width: 32px;
-    border: none;
-    background: #fee2e2;
-    border-radius: 8px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.2s;
-
-    svg {
-      width: 16px;
-      height: 16px;
-      color: #ef4444;
-    }
-
-    &:hover {
-      background: #fecaca;
-    }
-  }
-}
-
-// Process Button
-.process-btn {
-  width: 100%;
-  padding: 1rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  transition: all 0.3s;
-
-  svg {
-    width: 20px;
-    height: 20px;
-  }
-
-  &:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-}
-
-.spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-// Output Section
-.output-section {
-  .empty-state {
-    text-align: center;
-    padding: 2rem;
-    color: #9ca3af;
-
-    p {
-      margin: 0;
-    }
-  }
-
-  .error-message {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 1rem;
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    border-radius: 10px;
-    color: #dc2626;
-
-    svg {
-      width: 20px;
-      height: 20px;
-      min-width: 20px;
-    }
-  }
-}
-
-// Result Card
-.result-card {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
-  border: 1px solid rgba(16, 185, 129, 0.2);
-  border-radius: 12px;
-
-  .result-icon {
-    width: 48px;
-    height: 48px;
-    min-width: 48px;
-    background: rgba(16, 185, 129, 0.2);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    svg {
-      width: 24px;
-      height: 24px;
-      color: #10b981;
-    }
-  }
-
-  .result-info {
-    flex: 1;
-
-    .result-name {
-      display: block;
-      font-weight: 500;
-      color: #1a1a2e;
-      word-break: break-all;
-    }
-
-    .result-status {
-      font-size: 0.875rem;
-      color: #10b981;
-    }
-  }
-
-  .result-actions {
-    display: flex;
-    gap: 0.5rem;
-  }
-}
-
-.download-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1.25rem;
-  background: #10b981;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  svg {
-    width: 18px;
-    height: 18px;
-  }
-
-  &:hover {
-    background: #059669;
-  }
-}
-
-// Responsive
-@media (max-width: 640px) {
-  .dashboard-header {
-    padding: 1rem;
-    flex-wrap: wrap;
-    gap: 1rem;
-
-    .logo .logo-text h1 {
-      font-size: 1rem;
-    }
-
-    .user-section {
-      .user-name {
-        display: none;
-      }
-    }
-  }
-
-  .dashboard-main {
-    padding: 1rem;
-  }
-
-  .result-card {
-    flex-direction: column;
-    text-align: center;
-
-    .result-actions {
-      width: 100%;
-      justify-content: center;
-    }
-  }
-}
+    </section>
+  </main>
+</div>
