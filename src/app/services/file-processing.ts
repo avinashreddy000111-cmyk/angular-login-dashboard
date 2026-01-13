@@ -45,15 +45,15 @@ export class FileProcessingService {
   private buildRequest(formData: DashboardFormData, fileContent?: string): BackendRequest {
     const request: BackendRequest = {
       Request: {
-        'TRANSACTION TYPE': formData.transactionType,
+        'TRANSACTION_TYPE': formData.transactionType,
         'FORMAT': formData.format,
-        'RESPONSE TYPE': formData.responseType
+        'RESPONSE_TYPE': formData.responseType
       }
     };
 
     // Only add Input File if content exists
     if (fileContent) {
-      request.Request['Input File'] = fileContent;
+      request.Request['Input_File'] = fileContent;
     }
 
     return request;
