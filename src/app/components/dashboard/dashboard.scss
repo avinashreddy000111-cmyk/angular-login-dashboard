@@ -216,6 +216,40 @@
       box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
   }
+
+  // Special styling for ORDER TYPE dropdown
+  &.order-type-group {
+    animation: slideDown 0.3s ease-out;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+    padding: 1rem;
+    border-radius: 10px;
+    margin: 0.25rem 0;
+
+    label {
+      color: #667eea;
+    }
+
+    select {
+      border-color: rgba(102, 126, 234, 0.3);
+      
+      &:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+      }
+    }
+  }
+}
+
+// Animation for ORDER TYPE appearing
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 // Upload Zone
