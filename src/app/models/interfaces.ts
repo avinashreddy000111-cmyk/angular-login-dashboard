@@ -16,6 +16,14 @@ export enum TransactionType {
   ASN = 'ASN'
 }
 
+// NEW: Order Type - only shown when Transaction Type is ORDER
+export enum OrderType {
+  PURCHASE_ORDER = 'PURCHASE_ORDER',
+  SALES_ORDER = 'SALES_ORDER',
+  RETURN_ORDER = 'RETURN_ORDER',
+  TRANSFER_ORDER = 'TRANSFER_ORDER'
+}
+
 export enum FormatType {
   EDI = 'EDI',
   JSON = 'JSON'
@@ -32,6 +40,7 @@ export enum ResponseType {
 export interface BackendRequest {
   Request: {
     'TRANSACTION TYPE': string;
+    'ORDER TYPE'?: string;  // Optional - only when Transaction Type is ORDER
     'FORMAT': string;
     'RESPONSE TYPE': string;
     'Input File'?: string;  // Optional - only sent when file is uploaded
@@ -55,6 +64,7 @@ export interface ErrorResponse {
 
 export interface DashboardFormData {
   transactionType: TransactionType;
+  orderType?: OrderType;  // Optional - only when Transaction Type is ORDER
   format: FormatType;
   responseType: ResponseType;
 }
