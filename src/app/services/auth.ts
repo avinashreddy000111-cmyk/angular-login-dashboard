@@ -9,8 +9,8 @@ import { UserCredentials, LoginResponse } from '../models/interfaces';
 })
 export class AuthService {
   // Hardcoded valid credentials
-  private readonly VALID_USERNAME = 'admin';
-  private readonly VALID_PASSWORD = 'password123';
+  private readonly VALID_USERNAME = 'avinash';
+  private readonly VALID_PASSWORD = 'avinash@1234';
   
   // Authentication state using signals
   private isAuthenticatedSignal = signal<boolean>(this.checkStoredAuth());
