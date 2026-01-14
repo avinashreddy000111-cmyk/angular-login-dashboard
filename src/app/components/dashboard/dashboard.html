@@ -74,11 +74,11 @@
             </select>
           </div>
 
-          <!-- Response Type -->
+          <!-- Response Type - Filtered based on Transaction Type -->
           <div class="form-group">
             <label>Response Type</label>
             <select [ngModel]="selectedResponseType()" (ngModelChange)="onResponseTypeChange($event)">
-              @for (type of responseTypes; track type) {
+              @for (type of filteredResponseTypes(); track type) {
                 <option [value]="type">{{ type }}</option>
               }
             </select>
