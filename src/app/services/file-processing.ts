@@ -1,15 +1,24 @@
+// src/app/services/file-processing.ts
+
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, throwError, TimeoutError } from 'rxjs';
+import { timeout, catchError } from 'rxjs/operators';
 import { 
   ProcessingResponse, 
   DashboardFormData,
   BackendRequest,
   TransactionType,
-  OrderType,
-  FormatType,
-  ResponseType
+  FormatType
 } from '../models/interfaces';
+
+// Custom error for timeout
+export class RequestTimeoutError extends Error {
+  constructor(message: string = 'Request timed out. Please try again.') {
+    super(message);
+    this.name = 'RequestTimeoutError';
+  }
+}
 
 @Injectable({
   providedIn: 'root'
@@ -19,8 +28,8 @@ export class FileProcessingService {
   // Backend API URL - Update this when deploying
   private API_URL = 'http://localhost:8080/api/process';
   
-  // For production (Render deployment):
-  // private API_URL = 'https://your-backend.onrender.com/api/process';
+  // Timeout duration in milliseconds (60 seconds)
+  private readonly TIMEOUT_DURATION = 60000;
 
   private httpOptions = {
     headers: new HttpHeaders({
@@ -32,27 +41,6 @@ export class FileProcessingService {
 
   /**
    * Build the JSON request object based on dashboard selections
-   * 
-   * When Transaction Type is ORDER:
-   * {
-   *   "Request": {
-   *     "TRANSACTION TYPE": "ORDER",
-   *     "ORDER TYPE": "PURCHASE_ORDER",
-   *     "FORMAT": "EDI",
-   *     "RESPONSE TYPE": "ACK",
-   *     "Input File": "base64_content" (optional)
-   *   }
-   * }
-   * 
-   * When Transaction Type is ASN:
-   * {
-   *   "Request": {
-   *     "TRANSACTION TYPE": "ASN",
-   *     "FORMAT": "EDI",
-   *     "RESPONSE TYPE": "ACK",
-   *     "Input File": "base64_content" (optional)
-   *   }
-   * }
    */
   private buildRequest(formData: DashboardFormData, fileContent?: string): BackendRequest {
     const request: BackendRequest = {
@@ -77,7 +65,19 @@ export class FileProcessingService {
   }
 
   /**
-   * Process file - sends JSON request to backend
+   * Handle timeout and other errors
+   */
+  private handleError(error: any): Observable<never> {
+    if (error instanceof TimeoutError) {
+      return throwError(() => new RequestTimeoutError());
+    }
+    
+    // Re-throw other errors
+    return throwError(() => error);
+  }
+
+  /**
+   * Process file - sends JSON request to backend with 60-second timeout
    * Used when a file is uploaded (ACK, SHIPCONF, RECEIPT)
    */
   processFile(formData: DashboardFormData, file: File): Observable<ProcessingResponse> {
@@ -93,9 +93,14 @@ export class FileProcessingService {
         
         // Log the request for debugging
         console.log('Sending request to backend:', JSON.stringify(requestBody, null, 2));
+        console.log(`Request timeout set to ${this.TIMEOUT_DURATION / 1000} seconds`);
         
-        // Send to backend
+        // Send to backend with timeout
         this.http.post<ProcessingResponse>(this.API_URL, requestBody, this.httpOptions)
+          .pipe(
+            timeout(this.TIMEOUT_DURATION),
+            catchError(this.handleError)
+          )
           .subscribe({
             next: (response) => {
               observer.next(response);
@@ -109,7 +114,7 @@ export class FileProcessingService {
       };
       
       reader.onerror = () => {
-        observer.error({ message: 'Failed to read file' });
+        observer.error(new Error('Failed to read file'));
       };
       
       reader.readAsDataURL(file);
@@ -117,7 +122,7 @@ export class FileProcessingService {
   }
 
   /**
-   * Get Schema - sends JSON request without file
+   * Get Schema - sends JSON request without file with 60-second timeout
    * Used when GETSCHEMA is selected
    */
   getSchema(formData: DashboardFormData): Observable<ProcessingResponse> {
@@ -126,18 +131,24 @@ export class FileProcessingService {
     
     // Log the request for debugging
     console.log('Sending schema request to backend:', JSON.stringify(requestBody, null, 2));
+    console.log(`Request timeout set to ${this.TIMEOUT_DURATION / 1000} seconds`);
     
-    // Send to backend
-    return this.http.post<ProcessingResponse>(this.API_URL, requestBody, this.httpOptions);
+    // Send to backend with timeout
+    return this.http.post<ProcessingResponse>(this.API_URL, requestBody, this.httpOptions)
+      .pipe(
+        timeout(this.TIMEOUT_DURATION),
+        catchError(this.handleError)
+      );
   }
 
   /**
    * SIMULATED VERSION - Use this for testing without backend
-   * Process file with simulated response
+   * Process file with simulated response and 60-second timeout
    */
   processFileSimulated(formData: DashboardFormData, file: File): Observable<ProcessingResponse> {
     return new Observable(observer => {
       const reader = new FileReader();
+      const startTime = Date.now();
       
       reader.onload = () => {
         const base64Content = (reader.result as string).split(',')[1];
@@ -145,17 +156,41 @@ export class FileProcessingService {
         // Build the request JSON (for logging/debugging)
         const requestBody = this.buildRequest(formData, base64Content);
         console.log('Request JSON (simulated):', JSON.stringify(requestBody, null, 2));
+        console.log(`Request timeout set to ${this.TIMEOUT_DURATION / 1000} seconds`);
         
-        // Simulate processing delay
-        setTimeout(() => {
+        // Simulate processing delay (1.5 seconds for normal response)
+        // Change this value to test timeout (e.g., 65000 for timeout test)
+        const simulatedDelay = 1500;
+        
+        const timeoutId = setTimeout(() => {
+          const elapsedTime = Date.now() - startTime;
+          
+          // Check if we've exceeded the timeout
+          if (elapsedTime >= this.TIMEOUT_DURATION) {
+            observer.error(new RequestTimeoutError());
+            return;
+          }
+          
           const response = this.generateSimulatedResponse(formData);
           observer.next(response);
           observer.complete();
-        }, 1500);
+        }, simulatedDelay);
+
+        // Set up timeout check
+        const timeoutCheckId = setTimeout(() => {
+          clearTimeout(timeoutId);
+          observer.error(new RequestTimeoutError());
+        }, this.TIMEOUT_DURATION);
+
+        // Clear the timeout check if we complete normally
+        return () => {
+          clearTimeout(timeoutId);
+          clearTimeout(timeoutCheckId);
+        };
       };
       
       reader.onerror = () => {
-        observer.error({ message: 'Failed to read file' });
+        observer.error(new Error('Failed to read file'));
       };
       
       reader.readAsDataURL(file);
@@ -163,19 +198,46 @@ export class FileProcessingService {
   }
 
   /**
-   * SIMULATED VERSION - Get Schema without backend
+   * SIMULATED VERSION - Get Schema without backend with 60-second timeout
    */
   getSchemaSimulated(formData: DashboardFormData): Observable<ProcessingResponse> {
     // Build request without file content (for logging/debugging)
     const requestBody = this.buildRequest(formData);
     console.log('Schema Request JSON (simulated):', JSON.stringify(requestBody, null, 2));
+    console.log(`Request timeout set to ${this.TIMEOUT_DURATION / 1000} seconds`);
     
     return new Observable(observer => {
-      setTimeout(() => {
+      const startTime = Date.now();
+      
+      // Simulate processing delay (1 second for normal response)
+      // Change this value to test timeout (e.g., 65000 for timeout test)
+      const simulatedDelay = 1000;
+      
+      const timeoutId = setTimeout(() => {
+        const elapsedTime = Date.now() - startTime;
+        
+        // Check if we've exceeded the timeout
+        if (elapsedTime >= this.TIMEOUT_DURATION) {
+          observer.error(new RequestTimeoutError());
+          return;
+        }
+        
         const response = this.generateSchemaResponse(formData);
         observer.next(response);
         observer.complete();
-      }, 1000);
+      }, simulatedDelay);
+
+      // Set up timeout check
+      const timeoutCheckId = setTimeout(() => {
+        clearTimeout(timeoutId);
+        observer.error(new RequestTimeoutError());
+      }, this.TIMEOUT_DURATION);
+
+      // Return cleanup function
+      return () => {
+        clearTimeout(timeoutId);
+        clearTimeout(timeoutCheckId);
+      };
     });
   }
 
