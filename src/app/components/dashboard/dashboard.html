@@ -158,7 +158,7 @@
           (click)="processFile()">
           @if (isProcessing()) {
             <span class="spinner"></span>
-            Processing...
+            Processing... (60s timeout)
           } @else {
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polygon points="5 3 19 12 5 21 5 3"/>
@@ -185,13 +185,31 @@
       </div>
 
       @if (errorMessage()) {
-        <div class="error-message">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-          {{ errorMessage() }}
+        <div class="error-message" [class.timeout-error]="isTimeoutError()">
+          @if (isTimeoutError()) {
+            <!-- Timeout Error Icon (Clock) -->
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+          } @else {
+            <!-- Generic Error Icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+          }
+          <div class="error-content">
+            <span class="error-title">
+              @if (isTimeoutError()) {
+                Request Timed Out
+              } @else {
+                Error
+              }
+            </span>
+            <span class="error-text">{{ errorMessage() }}</span>
+          </div>
         </div>
       } @else if (processedResult()) {
         <div class="result-card">
