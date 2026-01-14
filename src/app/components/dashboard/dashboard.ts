@@ -1,6 +1,6 @@
 // src/app/components/dashboard/dashboard.ts
 
-import { Component, inject, signal, computed, OnDestroy } from '@angular/core';
+import { Component, inject, signal, computed, OnDestroy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -41,7 +41,21 @@ export class DashboardComponent implements OnDestroy {
   transactionTypes = Object.values(TransactionType);
   orderTypes = Object.values(OrderType);
   formats = Object.values(FormatType);
-  responseTypes = Object.values(ResponseType);
+
+  // Define response types for each transaction type
+  // ORDER: ACK, SHIPCONF, GETSCHEMA
+  // ASN: ACK, RECEIPT, GETSCHEMA
+  private readonly orderResponseTypes: ResponseType[] = [
+    ResponseType.ACK,
+    ResponseType.SHIPCONF,
+    ResponseType.GETSCHEMA
+  ];
+
+  private readonly asnResponseTypes: ResponseType[] = [
+    ResponseType.ACK,
+    ResponseType.RECEIPT,
+    ResponseType.GETSCHEMA
+  ];
 
   // Selected values using enums
   selectedTransactionType = signal<TransactionType>(TransactionType.ORDER);
@@ -58,6 +72,15 @@ export class DashboardComponent implements OnDestroy {
   
   // Flag to indicate if the error is a timeout
   isTimeoutError = signal(false);
+
+  // Computed: Get filtered response types based on transaction type
+  filteredResponseTypes = computed(() => {
+    if (this.selectedTransactionType() === TransactionType.ORDER) {
+      return this.orderResponseTypes;
+    } else {
+      return this.asnResponseTypes;
+    }
+  });
 
   // Computed: Show ORDER TYPE dropdown only when Transaction Type is ORDER
   showOrderType = computed(() => {
@@ -78,6 +101,23 @@ export class DashboardComponent implements OnDestroy {
     // For other types, need a file
     return !this.selectedFile();
   });
+
+  constructor() {
+    // Effect to reset response type when transaction type changes
+    // and current response type is not valid for new transaction type
+    effect(() => {
+      const currentTransactionType = this.selectedTransactionType();
+      const currentResponseType = this.selectedResponseType();
+      const validResponseTypes = currentTransactionType === TransactionType.ORDER 
+        ? this.orderResponseTypes 
+        : this.asnResponseTypes;
+
+      // If current response type is not valid for the new transaction type, reset to ACK
+      if (!validResponseTypes.includes(currentResponseType)) {
+        this.selectedResponseType.set(ResponseType.ACK);
+      }
+    }, { allowSignalWrites: true });
+  }
 
   // Handle Transaction Type change
   onTransactionTypeChange(value: string): void {
