@@ -472,21 +472,83 @@
     }
   }
 
+  // Generic Error Message
   .error-message {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 0.75rem;
-    padding: 1rem;
+    padding: 1rem 1.25rem;
     background: #fef2f2;
     border: 1px solid #fecaca;
     border-radius: 10px;
     color: #dc2626;
+    animation: fadeIn 0.3s ease-out;
 
     svg {
-      width: 20px;
-      height: 20px;
-      min-width: 20px;
+      width: 24px;
+      height: 24px;
+      min-width: 24px;
+      margin-top: 2px;
     }
+
+    .error-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+
+      .error-title {
+        font-weight: 600;
+        font-size: 0.9375rem;
+      }
+
+      .error-text {
+        font-size: 0.875rem;
+        color: #b91c1c;
+      }
+    }
+
+    // Timeout Error specific styling
+    &.timeout-error {
+      background: linear-gradient(135deg, #fef3c7 0%, #fef2f2 100%);
+      border-color: #f59e0b;
+      
+      svg {
+        color: #f59e0b;
+        animation: pulse 2s infinite;
+      }
+
+      .error-content {
+        .error-title {
+          color: #b45309;
+        }
+
+        .error-text {
+          color: #92400e;
+        }
+      }
+    }
+  }
+}
+
+// Fade in animation for error messages
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Pulse animation for timeout icon
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
   }
 }
 
@@ -591,6 +653,16 @@
     .result-actions {
       width: 100%;
       justify-content: center;
+    }
+  }
+
+  .error-message {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+
+    .error-content {
+      align-items: center;
     }
   }
 }
