@@ -1,9 +1,12 @@
-import { Component, inject, signal, computed } from '@angular/core';
+// src/app/components/dashboard/dashboard.ts
+
+import { Component, inject, signal, computed, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { AuthService } from '../../services/auth';
-import { FileProcessingService } from '../../services/file-processing';
+import { FileProcessingService, RequestTimeoutError } from '../../services/file-processing';
 import { 
   ProcessingResponse, 
   DashboardFormData,
@@ -20,10 +23,13 @@ import {
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss'
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnDestroy {
   private router = inject(Router);
   authService = inject(AuthService);
   private fileService = inject(FileProcessingService);
+
+  // Subscription management for cleanup
+  private currentRequest: Subscription | null = null;
 
   // Enum references for template
   TransactionType = TransactionType;
@@ -39,7 +45,7 @@ export class DashboardComponent {
 
   // Selected values using enums
   selectedTransactionType = signal<TransactionType>(TransactionType.ORDER);
-  selectedOrderType = signal<OrderType>(OrderType.LTL);;
+  selectedOrderType = signal<OrderType>(OrderType.LTL);
   selectedFormat = signal<FormatType>(FormatType.EDI);
   selectedResponseType = signal<ResponseType>(ResponseType.ACK);
 
@@ -49,6 +55,9 @@ export class DashboardComponent {
   isProcessing = signal(false);
   processedResult = signal<ProcessingResponse | null>(null);
   errorMessage = signal<string | null>(null);
+  
+  // Flag to indicate if the error is a timeout
+  isTimeoutError = signal(false);
 
   // Computed: Show ORDER TYPE dropdown only when Transaction Type is ORDER
   showOrderType = computed(() => {
@@ -100,8 +109,7 @@ export class DashboardComponent {
     const files = event.dataTransfer?.files;
     if (files && files.length > 0) {
       this.selectedFile.set(files[0]);
-      this.processedResult.set(null);
-      this.errorMessage.set(null);
+      this.clearOutputState();
     }
   }
 
@@ -110,14 +118,13 @@ export class DashboardComponent {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
       this.selectedFile.set(input.files[0]);
-      this.processedResult.set(null);
-      this.errorMessage.set(null);
+      this.clearOutputState();
     }
   }
 
   removeFile(): void {
     this.selectedFile.set(null);
-    this.errorMessage.set(null);
+    this.clearOutputState();
   }
 
   // Clear file when switching to GETSCHEMA
@@ -129,8 +136,49 @@ export class DashboardComponent {
   }
 
   /**
+   * Clear output state - resets error and result
+   */
+  private clearOutputState(): void {
+    this.errorMessage.set(null);
+    this.processedResult.set(null);
+    this.isTimeoutError.set(false);
+  }
+
+  /**
+   * Reset dashboard for next request
+   * Called after timeout or successful processing
+   */
+  private resetForNextRequest(): void {
+    this.isProcessing.set(false);
+    // Cancel any pending request
+    if (this.currentRequest) {
+      this.currentRequest.unsubscribe();
+      this.currentRequest = null;
+    }
+  }
+
+  /**
+   * Handle request error (including timeout)
+   */
+  private handleRequestError(error: any): void {
+    console.error('Request error:', error);
+    
+    if (error instanceof RequestTimeoutError) {
+      this.errorMessage.set('Request timed out. The server did not respond within 60 seconds. Please try again.');
+      this.isTimeoutError.set(true);
+    } else {
+      this.errorMessage.set(error.message || 'Processing failed. Please try again.');
+      this.isTimeoutError.set(false);
+    }
+    
+    // Reset dashboard for next request
+    this.resetForNextRequest();
+  }
+
+  /**
    * Process button click handler
    * Builds JSON request and sends to backend
+   * Waits synchronously for response with 60-second timeout
    */
   processFile(): void {
     const isGetSchema = this.selectedResponseType() === ResponseType.GETSCHEMA;
@@ -139,8 +187,14 @@ export class DashboardComponent {
     // For non-GETSCHEMA, require file
     if (!isGetSchema && !file) return;
 
+    // Cancel any existing request
+    if (this.currentRequest) {
+      this.currentRequest.unsubscribe();
+      this.currentRequest = null;
+    }
+
     this.isProcessing.set(true);
-    this.errorMessage.set(null);
+    this.clearOutputState();
 
     // Build form data for request
     const formData: DashboardFormData = {
@@ -154,29 +208,33 @@ export class DashboardComponent {
       formData.orderType = this.selectedOrderType();
     }
 
+    console.log('Starting request... Waiting for response (timeout: 60 seconds)');
+
     if (isGetSchema) {
       // GETSCHEMA - no file needed
-      this.fileService.getSchemaSimulated(formData).subscribe({
+      // Using real backend method (switch to getSchemaSimulated for testing)
+      this.currentRequest = this.fileService.getSchema(formData).subscribe({
         next: (response) => {
+          console.log('Response received successfully');
           this.processedResult.set(response);
-          this.isProcessing.set(false);
+          this.resetForNextRequest();
         },
         error: (error) => {
-          this.errorMessage.set(error.message || 'Failed to get schema');
-          this.isProcessing.set(false);
+          this.handleRequestError(error);
         }
       });
     } else {
       // File processing - includes Input File
-      this.fileService.processFileSimulated(formData, file!).subscribe({
+      // Using real backend method (switch to processFileSimulated for testing)
+      this.currentRequest = this.fileService.processFile(formData, file!).subscribe({
         next: (response) => {
+          console.log('Response received successfully');
           this.processedResult.set(response);
-          this.isProcessing.set(false);
           this.selectedFile.set(null); // Clear input after success
+          this.resetForNextRequest();
         },
         error: (error) => {
-          this.errorMessage.set(error.message || 'Processing failed');
-          this.isProcessing.set(false);
+          this.handleRequestError(error);
         }
       });
     }
@@ -205,7 +263,22 @@ export class DashboardComponent {
   }
 
   logout(): void {
+    // Cancel any pending request before logout
+    if (this.currentRequest) {
+      this.currentRequest.unsubscribe();
+      this.currentRequest = null;
+    }
     this.authService.logout();
     this.router.navigate(['/login']);
+  }
+
+  /**
+   * Cleanup on component destroy
+   */
+  ngOnDestroy(): void {
+    if (this.currentRequest) {
+      this.currentRequest.unsubscribe();
+      this.currentRequest = null;
+    }
   }
 }
