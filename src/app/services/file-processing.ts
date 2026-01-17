@@ -45,8 +45,9 @@ export class FileProcessingService {
   /**
    * Generate a unique UUID for each transaction
    * Uses crypto.randomUUID() for true uniqueness across instances
+   * Made public so dashboard can track the UUID
    */
-  private generateUUID(): string {
+  generateUUID(): string {
     // crypto.randomUUID() generates a proper UUID v4
     // Fallback for older browsers that don't support it
     if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -63,9 +64,9 @@ export class FileProcessingService {
   /**
    * Build the JSON request object based on dashboard selections
    */
-  private buildRequest(formData: DashboardFormData, fileContent?: string): BackendRequest {
+  private buildRequest(formData: DashboardFormData, uuid: string, fileContent?: string): BackendRequest {
     const request: BackendRequest = {
-      UUID: this.generateUUID(),
+      UUID: uuid,
       Request: {
         'TRANSACTION TYPE': formData.transactionType,
         'FORMAT': formData.format,
@@ -103,7 +104,7 @@ export class FileProcessingService {
    * Used when a file is uploaded (ACK, SHIPCONF, RECEIPT)
    * Response format: { response: ProcessingResponseItem[] }
    */
-  processFile(formData: DashboardFormData, file: File): Observable<ProcessingResponse> {
+  processFile(formData: DashboardFormData, file: File, uuid: string): Observable<ProcessingResponse> {
     return new Observable(observer => {
       const reader = new FileReader();
       
@@ -112,7 +113,7 @@ export class FileProcessingService {
         const base64Content = (reader.result as string).split(',')[1];
         
         // Build the request JSON
-        const requestBody = this.buildRequest(formData, base64Content);
+        const requestBody = this.buildRequest(formData, uuid, base64Content);
         
         // Log the request for debugging
         console.log('Sending request to backend:', JSON.stringify(requestBody, null, 2));
@@ -149,9 +150,9 @@ export class FileProcessingService {
    * Used when GETSCHEMA is selected
    * Response format: { response: ProcessingResponseItem[] }
    */
-  getSchema(formData: DashboardFormData): Observable<ProcessingResponse> {
+  getSchema(formData: DashboardFormData, uuid: string): Observable<ProcessingResponse> {
     // Build request without file content
-    const requestBody = this.buildRequest(formData);
+    const requestBody = this.buildRequest(formData, uuid);
     
     // Log the request for debugging
     console.log('Sending schema request to backend:', JSON.stringify(requestBody, null, 2));
@@ -170,7 +171,7 @@ export class FileProcessingService {
    * Process file with simulated response and 60-second timeout
    * Returns array format: { response: ProcessingResponseItem[] }
    */
-  processFileSimulated(formData: DashboardFormData, file: File): Observable<ProcessingResponse> {
+  processFileSimulated(formData: DashboardFormData, file: File, uuid: string): Observable<ProcessingResponse> {
     return new Observable(observer => {
       const reader = new FileReader();
       const startTime = Date.now();
@@ -179,7 +180,7 @@ export class FileProcessingService {
         const base64Content = (reader.result as string).split(',')[1];
         
         // Build the request JSON (for logging/debugging)
-        const requestBody = this.buildRequest(formData, base64Content);
+        const requestBody = this.buildRequest(formData, uuid, base64Content);
         console.log('Request JSON (simulated):', JSON.stringify(requestBody, null, 2));
         console.log(`Request timeout set to ${this.TIMEOUT_DURATION / 1000} seconds`);
         
@@ -226,9 +227,9 @@ export class FileProcessingService {
    * SIMULATED VERSION - Get Schema without backend with 60-second timeout
    * Returns array format: { response: ProcessingResponseItem[] }
    */
-  getSchemaSimulated(formData: DashboardFormData): Observable<ProcessingResponse> {
+  getSchemaSimulated(formData: DashboardFormData, uuid: string): Observable<ProcessingResponse> {
     // Build request without file content (for logging/debugging)
-    const requestBody = this.buildRequest(formData);
+    const requestBody = this.buildRequest(formData, uuid);
     console.log('Schema Request JSON (simulated):', JSON.stringify(requestBody, null, 2));
     console.log(`Request timeout set to ${this.TIMEOUT_DURATION / 1000} seconds`);
     
