@@ -380,13 +380,6 @@ export class DashboardComponent implements OnDestroy {
     });
   }
 
-  /**
-   * Clear all results
-   */
-  clearResults(): void {
-    this.processedResults.set([]);
-  }
-
   logout(): void {
     // Cancel any pending request before logout
     if (this.currentRequest) {
