@@ -36,6 +36,7 @@ export enum ResponseType {
 
 // Request structure to send to Spring Boot backend
 export interface BackendRequest {
+  UUID: string;  // Unique identifier for each transaction
   Request: {
     'TRANSACTION TYPE': string;
     'ORDER TYPE'?: string;  // Optional - only when Transaction Type is ORDER
