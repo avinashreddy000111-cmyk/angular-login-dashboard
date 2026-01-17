@@ -96,7 +96,7 @@
           </svg>
           <h2>Input File</h2>
           @if (isFileInputDisabled()) {
-            <span class="disabled-badge">Not required for GETSCHEMA</span>
+            <span class="disabled-badge">Not required for {{ selectedTransactionType() }}</span>
           }
         </div>
 
@@ -138,7 +138,7 @@
               </svg>
               @if (isFileInputDisabled()) {
                 <p>File upload disabled</p>
-                <span>GETSCHEMA does not require a file</span>
+                <span>{{ selectedTransactionType() }} does not require a file</span>
               } @else {
                 <p>Drag & drop your file here</p>
                 <span>or</span>
@@ -164,7 +164,7 @@
               <polygon points="5 3 19 12 5 21 5 3"/>
             </svg>
             @if (isFileInputDisabled()) {
-              Get Schema
+              Process {{ selectedTransactionType() }}
             } @else {
               Process File
             }
@@ -217,7 +217,7 @@
       } @else if (hasResults()) {
         <!-- Multiple Results Container -->
         <div class="results-container">
-          <!-- Download All / Clear Actions (shown if more than 1 file) -->
+          <!-- Download All Actions (shown if more than 1 file) -->
           @if (processedResults().length > 1) {
             <div class="results-actions">
               <button class="download-all-btn" (click)="downloadAll()">
