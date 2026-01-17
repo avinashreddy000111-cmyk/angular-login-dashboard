@@ -13,7 +13,11 @@ export interface LoginResponse {
 
 export enum TransactionType {
   ORDER = 'ORDER',
-  ASN = 'ASN'
+  ASN = 'ASN',
+  SHIPCONFIRM = 'SHIPCONFIRM',
+  GETSCHEMA = 'GETSCHEMA',
+  ERRORRESPONSE = 'ERRORRESPONSE',
+  ERRORTIMEOUT = 'ERRORTIMEOUT'
 }
 
 // Order Type - only shown when Transaction Type is ORDER
