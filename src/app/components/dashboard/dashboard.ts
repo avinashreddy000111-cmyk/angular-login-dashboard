@@ -303,7 +303,7 @@ export class DashboardComponent implements OnDestroy {
   }
 
   /**
-   * Download a single file by index
+   * Download a single file by index and remove it from the list
    */
   downloadOutput(index: number): void {
     const results = this.processedResults();
@@ -333,16 +333,50 @@ export class DashboardComponent implements OnDestroy {
     link.download = result.filename;
     link.click();
     window.URL.revokeObjectURL(url);
+
+    // Remove the downloaded file from the list
+    const updatedResults = results.filter((_, i) => i !== index);
+    this.processedResults.set(updatedResults);
   }
 
   /**
-   * Download all files with staggered timing
+   * Download all files with staggered timing, then clear results
    */
   downloadAll(): void {
     const results = this.processedResults();
-    results.forEach((_, index) => {
+    const totalFiles = results.length;
+    
+    results.forEach((result, index) => {
       // Stagger downloads by 500ms to avoid browser blocking
-      setTimeout(() => this.downloadOutput(index), index * 500);
+      setTimeout(() => {
+        // Download file directly without removing from list
+        let blob: Blob;
+        try {
+          const byteCharacters = atob(result.content);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          blob = new Blob([byteArray.buffer], { type: result.mimeType });
+        } catch {
+          blob = new Blob([result.content], { type: result.mimeType });
+        }
+        
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = result.filename;
+        link.click();
+        window.URL.revokeObjectURL(url);
+
+        // Clear all results after last file is downloaded
+        if (index === totalFiles - 1) {
+          setTimeout(() => {
+            this.processedResults.set([]);
+          }, 300);
+        }
+      }, index * 500);
     });
   }
 
