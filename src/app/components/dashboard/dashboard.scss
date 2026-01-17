@@ -179,6 +179,17 @@
     padding: 0.25rem 0.75rem;
     border-radius: 12px;
   }
+
+  // NEW: File count badge
+  .file-count {
+    margin-left: auto;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    color: #667eea;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
 }
 
 // Config Form
@@ -569,7 +580,80 @@
   }
 }
 
-// Result Card
+// ============ NEW: Multiple Results Styles ============
+
+// Results container
+.results-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+// Results actions (Download All, Clear All)
+.results-actions {
+  display: flex;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 4px;
+}
+
+// Single clear action (for single file)
+.single-clear-action {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.download-all-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  }
+}
+
+.clear-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: rgba(107, 114, 128, 0.1);
+  color: #6b7280;
+  border: 1px solid rgba(107, 114, 128, 0.3);
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    background: rgba(107, 114, 128, 0.2);
+    color: #4b5563;
+  }
+}
+
+// Result Card - Updated for multiple items
 .result-card {
   display: flex;
   align-items: center;
@@ -578,6 +662,44 @@
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
   border: 1px solid rgba(16, 185, 129, 0.2);
   border-radius: 12px;
+  transition: all 0.2s ease;
+  animation: slideIn 0.3s ease-out;
+
+  &:hover {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.08) 100%);
+    border-color: rgba(16, 185, 129, 0.3);
+    transform: translateX(4px);
+  }
+
+  // Success state (default)
+  &.success {
+    .result-icon {
+      background: rgba(16, 185, 129, 0.2);
+      
+      svg {
+        color: #10b981;
+      }
+    }
+  }
+
+  // Failed state
+  &.failed {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%);
+    border-color: rgba(239, 68, 68, 0.2);
+
+    &:hover {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.08) 100%);
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .result-icon {
+      background: rgba(239, 68, 68, 0.2);
+      
+      svg {
+        color: #ef4444;
+      }
+    }
+  }
 
   .result-icon {
     width: 48px;
@@ -598,25 +720,55 @@
 
   .result-info {
     flex: 1;
+    min-width: 0; // Allow text truncation
 
     .result-name {
       display: block;
       font-weight: 500;
       color: #1a1a2e;
       word-break: break-all;
+      margin-bottom: 2px;
     }
 
     .result-status {
       font-size: 0.875rem;
       color: #10b981;
+
+      &.success {
+        color: #10b981;
+      }
+
+      &.failed {
+        color: #ef4444;
+      }
     }
   }
 
   .result-actions {
     display: flex;
     gap: 0.5rem;
+    flex-shrink: 0;
   }
 }
+
+// Slide in animation for result cards
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// Staggered animation for multiple cards
+.result-card:nth-child(1) { animation-delay: 0s; }
+.result-card:nth-child(2) { animation-delay: 0.1s; }
+.result-card:nth-child(3) { animation-delay: 0.2s; }
+.result-card:nth-child(4) { animation-delay: 0.3s; }
+.result-card:nth-child(5) { animation-delay: 0.4s; }
 
 .download-btn {
   display: flex;
@@ -638,6 +790,7 @@
 
   &:hover {
     background: #059669;
+    transform: translateY(-1px);
   }
 }
 
@@ -663,13 +816,31 @@
     padding: 1rem;
   }
 
+  .results-actions {
+    flex-direction: column;
+    
+    .download-all-btn,
+    .clear-btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
   .result-card {
     flex-direction: column;
     text-align: center;
 
+    .result-info {
+      width: 100%;
+    }
+
     .result-actions {
       width: 100%;
       justify-content: center;
+    }
+
+    &:hover {
+      transform: translateY(-2px);
     }
   }
 
