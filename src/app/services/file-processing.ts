@@ -4,6 +4,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError, TimeoutError } from 'rxjs';
 import { timeout, catchError } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 import { 
   ProcessingResponse,
   ProcessingResponseItem,
@@ -27,8 +28,8 @@ export class RequestTimeoutError extends Error {
 })
 export class FileProcessingService {
 
-  // Backend API URL - Update this when deploying
-  private API_URL = 'http://localhost:8080/api/process';
+  // Backend API URL - loaded from environment configuration
+  private API_URL = environment.apiUrl;
   
   // Timeout duration in milliseconds (60 seconds)
   private readonly TIMEOUT_DURATION = 60000;
