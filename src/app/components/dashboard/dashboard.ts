@@ -8,7 +8,8 @@ import { Subscription } from 'rxjs';
 import { AuthService } from '../../services/auth';
 import { FileProcessingService, RequestTimeoutError } from '../../services/file-processing';
 import { 
-  ProcessingResponse, 
+  ProcessingResponse,
+  ProcessingResponseItem, 
   DashboardFormData,
   TransactionType,
   OrderType,
@@ -67,11 +68,17 @@ export class DashboardComponent implements OnDestroy {
   isDragOver = signal(false);
 
   isProcessing = signal(false);
-  processedResult = signal<ProcessingResponse | null>(null);
+  
+  // UPDATED: Changed from single result to array of results
+  processedResults = signal<ProcessingResponseItem[]>([]);
+  
   errorMessage = signal<string | null>(null);
   
   // Flag to indicate if the error is a timeout
   isTimeoutError = signal(false);
+
+  // Computed: Check if there are any results
+  hasResults = computed(() => this.processedResults().length > 0);
 
   // Computed: Get filtered response types based on transaction type
   filteredResponseTypes = computed(() => {
@@ -176,11 +183,11 @@ export class DashboardComponent implements OnDestroy {
   }
 
   /**
-   * Clear output state - resets error and result
+   * Clear output state - resets error and results
    */
   private clearOutputState(): void {
     this.errorMessage.set(null);
-    this.processedResult.set(null);
+    this.processedResults.set([]);  // UPDATED: Clear array
     this.isTimeoutError.set(false);
   }
 
@@ -255,8 +262,9 @@ export class DashboardComponent implements OnDestroy {
       // Using real backend method (switch to getSchemaSimulated for testing)
       this.currentRequest = this.fileService.getSchema(formData).subscribe({
         next: (response) => {
-          console.log('Response received successfully');
-          this.processedResult.set(response);
+          console.log('Response received successfully:', response);
+          // UPDATED: Extract array from response
+          this.processedResults.set(response.response);
           this.resetForNextRequest();
         },
         error: (error) => {
@@ -268,8 +276,9 @@ export class DashboardComponent implements OnDestroy {
       // Using real backend method (switch to processFileSimulated for testing)
       this.currentRequest = this.fileService.processFile(formData, file!).subscribe({
         next: (response) => {
-          console.log('Response received successfully');
-          this.processedResult.set(response);
+          console.log('Response received successfully:', response);
+          // UPDATED: Extract array from response
+          this.processedResults.set(response.response);
           this.selectedFile.set(null); // Clear input after success
           this.resetForNextRequest();
         },
@@ -280,16 +289,29 @@ export class DashboardComponent implements OnDestroy {
     }
   }
 
-  downloadOutput(): void {
-    const result = this.processedResult();
-    if (!result) return;
+  /**
+   * Download a single file by index
+   */
+  downloadOutput(index: number): void {
+    const results = this.processedResults();
+    if (!results || index >= results.length) return;
     
-    const byteCharacters = atob(result.content);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    const result = results[index];
+    
+    // Check if content is base64 encoded or plain text
+    let byteArray: Uint8Array;
+    try {
+      const byteCharacters = atob(result.content);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      byteArray = new Uint8Array(byteNumbers);
+    } catch {
+      // If not base64, use plain text
+      byteArray = new TextEncoder().encode(result.content);
     }
-    const byteArray = new Uint8Array(byteNumbers);
+    
     const blob = new Blob([byteArray], { type: result.mimeType });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -297,9 +319,24 @@ export class DashboardComponent implements OnDestroy {
     link.download = result.filename;
     link.click();
     window.URL.revokeObjectURL(url);
-    
-    // Clear output after download
-    this.processedResult.set(null);
+  }
+
+  /**
+   * Download all files with staggered timing
+   */
+  downloadAll(): void {
+    const results = this.processedResults();
+    results.forEach((_, index) => {
+      // Stagger downloads by 500ms to avoid browser blocking
+      setTimeout(() => this.downloadOutput(index), index * 500);
+    });
+  }
+
+  /**
+   * Clear all results
+   */
+  clearResults(): void {
+    this.processedResults.set([]);
   }
 
   logout(): void {
