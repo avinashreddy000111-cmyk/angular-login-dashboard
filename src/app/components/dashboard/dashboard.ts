@@ -48,14 +48,19 @@ export class DashboardComponent implements OnDestroy {
   // ASN: ACK, RECEIPT, GETSCHEMA
   private readonly orderResponseTypes: ResponseType[] = [
     ResponseType.ACK,
-    ResponseType.SHIPCONF,
-    ResponseType.GETSCHEMA
+    ResponseType.SHIPCONF
   ];
 
   private readonly asnResponseTypes: ResponseType[] = [
     ResponseType.ACK,
-    ResponseType.RECEIPT,
-    ResponseType.GETSCHEMA
+    ResponseType.RECEIPT
+  ];
+
+  private readonly getSchemaResponseTypes: ResponseType[] = [
+    ResponseType.ASN,
+    ResponseType.ORDER,
+    ResponseType.SHIPCONFIRM,
+    ResponseType.RECEIPT
   ];
 
   // Selected values using enums
