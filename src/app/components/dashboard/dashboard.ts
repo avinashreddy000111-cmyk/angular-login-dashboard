@@ -44,19 +44,20 @@ export class DashboardComponent implements OnDestroy {
   formats = Object.values(FormatType);
 
   // Define response types for each transaction type
-  // ORDER: ACK, SHIPCONF, GETSCHEMA
-  // ASN: ACK, RECEIPT, GETSCHEMA
+  // ORDER: ACK, SHIPCONFIRM
   private readonly orderResponseTypes: ResponseType[] = [
     ResponseType.ACK,
-    ResponseType.SHIPCONF
+    ResponseType.SHIPCONFIRM
   ];
 
+  // ASN: ACK, RECEIPT
   private readonly asnResponseTypes: ResponseType[] = [
     ResponseType.ACK,
     ResponseType.RECEIPT
   ];
 
-  private readonly getSchemaResponseTypes: ResponseType[] = [
+  // GETSCHEMA, ERRORRESPONSE, ERRORTIMEOUT: ASN, ORDER, SHIPCONFIRM, RECEIPT
+  private readonly schemaAndErrorResponseTypes: ResponseType[] = [
     ResponseType.ASN,
     ResponseType.ORDER,
     ResponseType.SHIPCONFIRM,
@@ -74,7 +75,7 @@ export class DashboardComponent implements OnDestroy {
 
   isProcessing = signal(false);
   
-  // UPDATED: Changed from single result to array of results
+  // Array of results
   processedResults = signal<ProcessingResponseItem[]>([]);
   
   errorMessage = signal<string | null>(null);
@@ -90,32 +91,37 @@ export class DashboardComponent implements OnDestroy {
 
   // Computed: Get filtered response types based on transaction type
   filteredResponseTypes = computed(() => {
-  switch (this.selectedTransactionType()) {
-    case TransactionType.ORDER:
-      return this.orderResponseTypes;
-    case TransactionType.ASN:
-      return this.asnResponseTypes;
-    case TransactionType.GETSCHEMA:
-      return this.invoiceResponseTypes;
-    default:
-      return this.orderResponseTypes;
-  }
-});
+    switch (this.selectedTransactionType()) {
+      case TransactionType.ORDER:
+        return this.orderResponseTypes;
+      case TransactionType.ASN:
+        return this.asnResponseTypes;
+      case TransactionType.GETSCHEMA:
+      case TransactionType.ERRORRESPONSE:
+      case TransactionType.ERRORTIMEOUT:
+        return this.schemaAndErrorResponseTypes;
+      default:
+        return this.orderResponseTypes;
+    }
+  });
 
   // Computed: Show ORDER TYPE dropdown only when Transaction Type is ORDER
   showOrderType = computed(() => {
     return this.selectedTransactionType() === TransactionType.ORDER;
   });
 
-  // Computed: Check if file input should be disabled (for GETSCHEMA)
+  // Computed: Check if file input should be disabled (for GETSCHEMA, ERRORRESPONSE, ERRORTIMEOUT)
   isFileInputDisabled = computed(() => {
-    return this.selectedResponseType() === ResponseType.GETSCHEMA;
+    const transactionType = this.selectedTransactionType();
+    return transactionType === TransactionType.GETSCHEMA ||
+           transactionType === TransactionType.ERRORRESPONSE ||
+           transactionType === TransactionType.ERRORTIMEOUT;
   });
 
   // Computed: Check if process button should be disabled
   isProcessDisabled = computed(() => {
-    // If GETSCHEMA, don't need file - always enabled
-    if (this.selectedResponseType() === ResponseType.GETSCHEMA) {
+    // If GETSCHEMA, ERRORRESPONSE, ERRORTIMEOUT - don't need file, always enabled
+    if (this.isFileInputDisabled()) {
       return false;
     }
     // For other types, need a file
@@ -128,13 +134,27 @@ export class DashboardComponent implements OnDestroy {
     effect(() => {
       const currentTransactionType = this.selectedTransactionType();
       const currentResponseType = this.selectedResponseType();
-      const validResponseTypes = currentTransactionType === TransactionType.ORDER 
-        ? this.orderResponseTypes 
-        : this.asnResponseTypes;
+      
+      let validResponseTypes: ResponseType[];
+      switch (currentTransactionType) {
+        case TransactionType.ORDER:
+          validResponseTypes = this.orderResponseTypes;
+          break;
+        case TransactionType.ASN:
+          validResponseTypes = this.asnResponseTypes;
+          break;
+        case TransactionType.GETSCHEMA:
+        case TransactionType.ERRORRESPONSE:
+        case TransactionType.ERRORTIMEOUT:
+          validResponseTypes = this.schemaAndErrorResponseTypes;
+          break;
+        default:
+          validResponseTypes = this.orderResponseTypes;
+      }
 
-      // If current response type is not valid for the new transaction type, reset to ACK
+      // If current response type is not valid for the new transaction type, reset to first option
       if (!validResponseTypes.includes(currentResponseType)) {
-        this.selectedResponseType.set(ResponseType.ACK);
+        this.selectedResponseType.set(validResponseTypes[0]);
       }
     }, { allowSignalWrites: true });
   }
@@ -145,6 +165,12 @@ export class DashboardComponent implements OnDestroy {
     // Reset ORDER TYPE to default when switching to ORDER
     if (value === TransactionType.ORDER) {
       this.selectedOrderType.set(OrderType.LTL);
+    }
+    // Clear file when switching to types that don't need file
+    if (value === TransactionType.GETSCHEMA || 
+        value === TransactionType.ERRORRESPONSE || 
+        value === TransactionType.ERRORTIMEOUT) {
+      this.selectedFile.set(null);
     }
   }
 
@@ -187,12 +213,9 @@ export class DashboardComponent implements OnDestroy {
     this.clearOutputState();
   }
 
-  // Clear file when switching to GETSCHEMA
+  // Handle Response Type change
   onResponseTypeChange(value: string): void {
     this.selectedResponseType.set(value as ResponseType);
-    if (value === ResponseType.GETSCHEMA) {
-      this.selectedFile.set(null);
-    }
   }
 
   /**
@@ -200,7 +223,7 @@ export class DashboardComponent implements OnDestroy {
    */
   private clearOutputState(): void {
     this.errorMessage.set(null);
-    this.processedResults.set([]);  // UPDATED: Clear array
+    this.processedResults.set([]);
     this.isTimeoutError.set(false);
     this.currentUUID.set(null);
   }
@@ -246,11 +269,14 @@ export class DashboardComponent implements OnDestroy {
    * Waits synchronously for response with 60-second timeout
    */
   processFile(): void {
-    const isGetSchema = this.selectedResponseType() === ResponseType.GETSCHEMA;
+    const transactionType = this.selectedTransactionType();
+    const noFileRequired = transactionType === TransactionType.GETSCHEMA ||
+                          transactionType === TransactionType.ERRORRESPONSE ||
+                          transactionType === TransactionType.ERRORTIMEOUT;
     const file = this.selectedFile();
     
-    // For non-GETSCHEMA, require file
-    if (!isGetSchema && !file) return;
+    // For types that need file, require file
+    if (!noFileRequired && !file) return;
 
     // Cancel any existing request
     if (this.currentRequest) {
@@ -273,20 +299,17 @@ export class DashboardComponent implements OnDestroy {
       formData.orderType = this.selectedOrderType();
     }
 
-    console.log('Starting request... Waiting for response (timeout: 60 seconds)');
-
     // Generate UUID and store it for error tracking
     const uuid = this.fileService.generateUUID();
     this.currentUUID.set(uuid);
+    console.log('Starting request... Waiting for response (timeout: 60 seconds)');
     console.log('Request UUID:', uuid);
 
-    if (isGetSchema) {
-      // GETSCHEMA - no file needed
-      // Using real backend method (switch to getSchemaSimulated for testing)
+    if (noFileRequired) {
+      // GETSCHEMA, ERRORRESPONSE, ERRORTIMEOUT - no file needed
       this.currentRequest = this.fileService.getSchema(formData, uuid).subscribe({
         next: (response) => {
           console.log('Response received successfully:', response);
-          // UPDATED: Extract array from response
           this.processedResults.set(response.response);
           this.resetForNextRequest();
         },
@@ -296,11 +319,9 @@ export class DashboardComponent implements OnDestroy {
       });
     } else {
       // File processing - includes Input File
-      // Using real backend method (switch to processFileSimulated for testing)
       this.currentRequest = this.fileService.processFile(formData, file!, uuid).subscribe({
         next: (response) => {
           console.log('Response received successfully:', response);
-          // UPDATED: Extract array from response
           this.processedResults.set(response.response);
           this.selectedFile.set(null); // Clear input after success
           this.resetForNextRequest();
