@@ -14,7 +14,6 @@ export interface LoginResponse {
 export enum TransactionType {
   ORDER = 'ORDER',
   ASN = 'ASN',
-  SHIPCONFIRM = 'SHIPCONFIRM',
   GETSCHEMA = 'GETSCHEMA',
   ERRORRESPONSE = 'ERRORRESPONSE',
   ERRORTIMEOUT = 'ERRORTIMEOUT'
