@@ -290,8 +290,8 @@ export class FileProcessingService {
         mimeType: formData.format === FormatType.EDI ? 'application/edi-x12' : 'application/json',
         message: 'ACK file processed successfully'
       });
-    } else if (formData.responseType === ResponseType.SHIPCONF) {
-      // SHIPCONF response - return ACK and SHIPCONF files
+    } else if (formData.responseType === ResponseType.SHIPCONFIRM) {
+      // SHIPCONFIRM response - return ACK and SHIPCONFIRM files
       files.push({
         success: true,
         filename: `${formData.transactionType}_${orderType}_ACK_${timestamp}.${extension}`,
