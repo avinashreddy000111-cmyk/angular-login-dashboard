@@ -33,9 +33,10 @@ export enum FormatType {
 
 export enum ResponseType {
   ACK = 'ACK',
-  GETSCHEMA = 'GETSCHEMA',
-  SHIPCONF = 'SHIPCONF',
-  RECEIPT = 'RECEIPT'
+  SHIPCONFIRM = 'SHIPCONFIRM',
+  RECEIPT = 'RECEIPT',
+  ORDER = 'ORDER',
+  ASN = 'ASN'
 }
 
 // Request structure to send to Spring Boot backend
