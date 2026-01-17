@@ -42,10 +42,29 @@ export class FileProcessingService {
   constructor(private http: HttpClient) {}
 
   /**
+   * Generate a unique UUID for each transaction
+   * Uses crypto.randomUUID() for true uniqueness across instances
+   */
+  private generateUUID(): string {
+    // crypto.randomUUID() generates a proper UUID v4
+    // Fallback for older browsers that don't support it
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    // Fallback UUID generation
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+
+  /**
    * Build the JSON request object based on dashboard selections
    */
   private buildRequest(formData: DashboardFormData, fileContent?: string): BackendRequest {
     const request: BackendRequest = {
+      UUID: this.generateUUID(),
       Request: {
         'TRANSACTION TYPE': formData.transactionType,
         'FORMAT': formData.format,
