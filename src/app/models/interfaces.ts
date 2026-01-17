@@ -16,7 +16,7 @@ export enum TransactionType {
   ASN = 'ASN'
 }
 
-// NEW: Order Type - only shown when Transaction Type is ORDER
+// Order Type - only shown when Transaction Type is ORDER
 export enum OrderType {
   LTL = 'LTL',
   PARCEL = 'PARCEL'
@@ -45,13 +45,18 @@ export interface BackendRequest {
   };
 }
 
-// Response from Spring Boot backend
-export interface ProcessingResponse {
+// Single file response item in the array
+export interface ProcessingResponseItem {
   success: boolean;
   filename: string;
   content: string;
   mimeType: string;
-  message?: string;
+  message: string;
+}
+
+// Response from Spring Boot backend - now contains array of files
+export interface ProcessingResponse {
+  response: ProcessingResponseItem[];
 }
 
 export interface ErrorResponse {
