@@ -77,6 +77,9 @@ export class DashboardComponent implements OnDestroy {
   // Flag to indicate if the error is a timeout
   isTimeoutError = signal(false);
 
+  // Track current request UUID for error messages
+  currentUUID = signal<string | null>(null);
+
   // Computed: Check if there are any results
   hasResults = computed(() => this.processedResults().length > 0);
 
@@ -189,6 +192,7 @@ export class DashboardComponent implements OnDestroy {
     this.errorMessage.set(null);
     this.processedResults.set([]);  // UPDATED: Clear array
     this.isTimeoutError.set(false);
+    this.currentUUID.set(null);
   }
 
   /**
@@ -210,11 +214,15 @@ export class DashboardComponent implements OnDestroy {
   private handleRequestError(error: any): void {
     console.error('Request error:', error);
     
+    const uuid = this.currentUUID();
+    const uuidSuffix = uuid ? ` (UUID=${uuid})` : '';
+    
     if (error instanceof RequestTimeoutError) {
-      this.errorMessage.set('Request timed out. The server did not respond within 60 seconds. Please try again.');
+      this.errorMessage.set(`Request timed out. The server did not respond within 60 seconds. Please try again.${uuidSuffix}`);
       this.isTimeoutError.set(true);
     } else {
-      this.errorMessage.set(error.message || 'Processing failed. Please try again.');
+      const baseMessage = error.message || 'Processing failed. Please try again.';
+      this.errorMessage.set(`${baseMessage}${uuidSuffix}`);
       this.isTimeoutError.set(false);
     }
     
@@ -257,10 +265,15 @@ export class DashboardComponent implements OnDestroy {
 
     console.log('Starting request... Waiting for response (timeout: 60 seconds)');
 
+    // Generate UUID and store it for error tracking
+    const uuid = this.fileService.generateUUID();
+    this.currentUUID.set(uuid);
+    console.log('Request UUID:', uuid);
+
     if (isGetSchema) {
       // GETSCHEMA - no file needed
       // Using real backend method (switch to getSchemaSimulated for testing)
-      this.currentRequest = this.fileService.getSchema(formData).subscribe({
+      this.currentRequest = this.fileService.getSchema(formData, uuid).subscribe({
         next: (response) => {
           console.log('Response received successfully:', response);
           // UPDATED: Extract array from response
@@ -274,7 +287,7 @@ export class DashboardComponent implements OnDestroy {
     } else {
       // File processing - includes Input File
       // Using real backend method (switch to processFileSimulated for testing)
-      this.currentRequest = this.fileService.processFile(formData, file!).subscribe({
+      this.currentRequest = this.fileService.processFile(formData, file!, uuid).subscribe({
         next: (response) => {
           console.log('Response received successfully:', response);
           // UPDATED: Extract array from response
