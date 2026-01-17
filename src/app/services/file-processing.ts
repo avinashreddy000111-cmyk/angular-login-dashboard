@@ -5,11 +5,13 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError, TimeoutError } from 'rxjs';
 import { timeout, catchError } from 'rxjs/operators';
 import { 
-  ProcessingResponse, 
+  ProcessingResponse,
+  ProcessingResponseItem,
   DashboardFormData,
   BackendRequest,
   TransactionType,
-  FormatType
+  FormatType,
+  ResponseType
 } from '../models/interfaces';
 
 // Custom error for timeout
@@ -79,6 +81,7 @@ export class FileProcessingService {
   /**
    * Process file - sends JSON request to backend with 60-second timeout
    * Used when a file is uploaded (ACK, SHIPCONF, RECEIPT)
+   * Response format: { response: ProcessingResponseItem[] }
    */
   processFile(formData: DashboardFormData, file: File): Observable<ProcessingResponse> {
     return new Observable(observer => {
@@ -124,6 +127,7 @@ export class FileProcessingService {
   /**
    * Get Schema - sends JSON request without file with 60-second timeout
    * Used when GETSCHEMA is selected
+   * Response format: { response: ProcessingResponseItem[] }
    */
   getSchema(formData: DashboardFormData): Observable<ProcessingResponse> {
     // Build request without file content
@@ -144,6 +148,7 @@ export class FileProcessingService {
   /**
    * SIMULATED VERSION - Use this for testing without backend
    * Process file with simulated response and 60-second timeout
+   * Returns array format: { response: ProcessingResponseItem[] }
    */
   processFileSimulated(formData: DashboardFormData, file: File): Observable<ProcessingResponse> {
     return new Observable(observer => {
@@ -199,6 +204,7 @@ export class FileProcessingService {
 
   /**
    * SIMULATED VERSION - Get Schema without backend with 60-second timeout
+   * Returns array format: { response: ProcessingResponseItem[] }
    */
   getSchemaSimulated(formData: DashboardFormData): Observable<ProcessingResponse> {
     // Build request without file content (for logging/debugging)
@@ -242,48 +248,90 @@ export class FileProcessingService {
   }
 
   // ============ SIMULATED RESPONSE GENERATORS ============
+  // Now returns { response: ProcessingResponseItem[] } format
 
   private generateSimulatedResponse(formData: DashboardFormData): ProcessingResponse {
-    const timestamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0];
+    const timestamp = Date.now().toString();
+    const orderType = formData.orderType || 'DEFAULT';
     const extension = formData.format === FormatType.EDI ? 'edi' : 'json';
     
-    let content: string;
-    if (formData.format === FormatType.EDI) {
-      content = this.generateEdiContent(formData);
-    } else {
-      content = this.generateJsonContent(formData);
+    // Generate multiple files based on response type
+    const files: ProcessingResponseItem[] = [];
+
+    if (formData.responseType === ResponseType.ACK) {
+      // ACK response - return ACK file
+      files.push({
+        success: true,
+        filename: `${formData.transactionType}_${orderType}_ACK_${timestamp}.${extension}`,
+        content: formData.format === FormatType.EDI 
+          ? btoa(this.generateEdiContent(formData, 'ACK'))
+          : btoa(this.generateJsonContent(formData, 'ACK')),
+        mimeType: formData.format === FormatType.EDI ? 'application/edi-x12' : 'application/json',
+        message: 'ACK file processed successfully'
+      });
+    } else if (formData.responseType === ResponseType.SHIPCONF) {
+      // SHIPCONF response - return ACK and SHIPCONF files
+      files.push({
+        success: true,
+        filename: `${formData.transactionType}_${orderType}_ACK_${timestamp}.${extension}`,
+        content: formData.format === FormatType.EDI 
+          ? btoa(this.generateEdiContent(formData, 'ACK'))
+          : btoa(this.generateJsonContent(formData, 'ACK')),
+        mimeType: formData.format === FormatType.EDI ? 'application/edi-x12' : 'application/json',
+        message: 'ACK file processed successfully'
+      });
+      files.push({
+        success: true,
+        filename: `${formData.transactionType}_${orderType}_SHIPCONFIRM_${timestamp}.${extension}`,
+        content: formData.format === FormatType.EDI 
+          ? btoa(this.generateEdiContent(formData, 'SHIPCONF'))
+          : btoa(this.generateJsonContent(formData, 'SHIPCONF')),
+        mimeType: formData.format === FormatType.EDI ? 'application/edi-x12' : 'application/json',
+        message: 'SHIPCONFIRM file processed successfully'
+      });
+    } else if (formData.responseType === ResponseType.RECEIPT) {
+      // RECEIPT response - return ACK and RECEIPT files
+      files.push({
+        success: true,
+        filename: `${formData.transactionType}_ACK_${timestamp}.${extension}`,
+        content: formData.format === FormatType.EDI 
+          ? btoa(this.generateEdiContent(formData, 'ACK'))
+          : btoa(this.generateJsonContent(formData, 'ACK')),
+        mimeType: formData.format === FormatType.EDI ? 'application/edi-x12' : 'application/json',
+        message: 'ACK file processed successfully'
+      });
+      files.push({
+        success: true,
+        filename: `${formData.transactionType}_RECEIPT_${timestamp}.${extension}`,
+        content: formData.format === FormatType.EDI 
+          ? btoa(this.generateEdiContent(formData, 'RECEIPT'))
+          : btoa(this.generateJsonContent(formData, 'RECEIPT')),
+        mimeType: formData.format === FormatType.EDI ? 'application/edi-x12' : 'application/json',
+        message: 'RECEIPT file processed successfully'
+      });
     }
 
-    return {
-      success: true,
-      filename: `processed_${formData.responseType}_${timestamp}.${extension}`,
-      content: btoa(content),
-      mimeType: formData.format === FormatType.EDI ? 'application/edi-x12' : 'application/json',
-      message: 'File processed successfully'
-    };
+    return { response: files };
   }
 
   private generateSchemaResponse(formData: DashboardFormData): ProcessingResponse {
-    const timestamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0];
+    const timestamp = Date.now().toString();
     const extension = formData.format === FormatType.EDI ? 'txt' : 'json';
     
-    let content: string;
-    if (formData.format === FormatType.EDI) {
-      content = this.generateEdiSchema(formData);
-    } else {
-      content = this.generateJsonSchema(formData);
-    }
-
-    return {
+    const files: ProcessingResponseItem[] = [{
       success: true,
       filename: `schema_${formData.transactionType}_${formData.format}_${timestamp}.${extension}`,
-      content: btoa(content),
+      content: formData.format === FormatType.EDI 
+        ? btoa(this.generateEdiSchema(formData))
+        : btoa(this.generateJsonSchema(formData)),
       mimeType: formData.format === FormatType.EDI ? 'text/plain' : 'application/json',
       message: 'Schema generated successfully'
-    };
+    }];
+
+    return { response: files };
   }
 
-  private generateEdiContent(formData: DashboardFormData): string {
+  private generateEdiContent(formData: DashboardFormData, type: string): string {
     const timestamp = new Date().toISOString().replace(/[-:T]/g, '').substring(0, 14);
     const controlNumber = Date.now().toString().substring(0, 9);
     
@@ -292,22 +340,23 @@ GS*PR*SENDER*RECEIVER*${timestamp.substring(0, 8)}*${timestamp.substring(8, 12)}
 ST*855*0001~
 BAK*00*AC*${timestamp.substring(0, 8)}*PO-${Date.now() % 100000}~
 DTM*002*${timestamp.substring(0, 8)}~
-SE*5*0001~
+MSG*${type} for ${formData.transactionType}~
+SE*6*0001~
 GE*1*${controlNumber.substring(0, 6)}~
 IEA*1*${controlNumber}~`;
   }
 
-  private generateJsonContent(formData: DashboardFormData): string {
+  private generateJsonContent(formData: DashboardFormData, type: string): string {
     const response: any = {
       header: {
-        messageType: formData.responseType,
+        messageType: type,
         transactionType: formData.transactionType,
         timestamp: new Date().toISOString(),
         version: "0.0.2"
       },
       response: {
         status: "SUCCESS",
-        message: "Transaction processed successfully"
+        message: `${type} processed successfully`
       }
     };
 
