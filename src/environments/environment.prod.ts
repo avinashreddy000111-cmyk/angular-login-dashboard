@@ -2,5 +2,5 @@
 
 export const environment = {
   production: true,
-  apiUrl: 'https://edi-processor.onrender.com/api/process'
+  apiUrl: 'https://edi-processor.onrender.com/api/v1/edi/process'
 };
