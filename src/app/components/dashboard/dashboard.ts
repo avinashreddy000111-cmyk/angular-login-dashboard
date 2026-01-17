@@ -299,20 +299,21 @@ export class DashboardComponent implements OnDestroy {
     const result = results[index];
     
     // Check if content is base64 encoded or plain text
-    let byteArray: Uint8Array;
+    let blob: Blob;
     try {
       const byteCharacters = atob(result.content);
       const byteNumbers = new Array(byteCharacters.length);
       for (let i = 0; i < byteCharacters.length; i++) {
         byteNumbers[i] = byteCharacters.charCodeAt(i);
       }
-      byteArray = new Uint8Array(byteNumbers);
+      const byteArray = new Uint8Array(byteNumbers);
+      // Use ArrayBuffer directly to avoid TypeScript type issues
+      blob = new Blob([byteArray.buffer], { type: result.mimeType });
     } catch {
       // If not base64, use plain text
-      byteArray = new TextEncoder().encode(result.content);
+      blob = new Blob([result.content], { type: result.mimeType });
     }
     
-    const blob = new Blob([byteArray], { type: result.mimeType });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
