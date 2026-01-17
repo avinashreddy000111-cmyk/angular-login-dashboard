@@ -90,12 +90,17 @@ export class DashboardComponent implements OnDestroy {
 
   // Computed: Get filtered response types based on transaction type
   filteredResponseTypes = computed(() => {
-    if (this.selectedTransactionType() === TransactionType.ORDER) {
+  switch (this.selectedTransactionType()) {
+    case TransactionType.ORDER:
       return this.orderResponseTypes;
-    } else {
+    case TransactionType.ASN:
       return this.asnResponseTypes;
-    }
-  });
+    case TransactionType.GETSCHEMA:
+      return this.invoiceResponseTypes;
+    default:
+      return this.orderResponseTypes;
+  }
+});
 
   // Computed: Show ORDER TYPE dropdown only when Transaction Type is ORDER
   showOrderType = computed(() => {
