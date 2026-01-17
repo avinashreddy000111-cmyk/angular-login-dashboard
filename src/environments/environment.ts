@@ -1,4 +1,6 @@
+// src/environments/environment.ts (Development)
+
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:8080/api/process'
+  apiUrl: 'http://localhost:8080/api/v1/edi/process'
 };
