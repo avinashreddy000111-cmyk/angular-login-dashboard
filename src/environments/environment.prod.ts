@@ -1,4 +1,6 @@
+// src/environments/environment.prod.ts (Production)
+
 export const environment = {
   production: true,
-  apiUrl: 'https://your-backend-name.onrender.com/api/process'
+  apiUrl: 'https://edi-processor.onrender.com/api/process'
 };
