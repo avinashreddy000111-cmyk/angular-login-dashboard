@@ -105,9 +105,20 @@ export class DashboardComponent implements OnDestroy {
     }
   });
 
-  // Computed: Show ORDER TYPE dropdown only when Transaction Type is ORDER
-  showOrderType = computed(() => {
+  // Computed: Show ORDER TYPE dropdown AFTER Transaction Type (when Transaction Type is ORDER)
+  showOrderTypeAfterTransaction = computed(() => {
     return this.selectedTransactionType() === TransactionType.ORDER;
+  });
+
+  // Computed: Show ORDER TYPE dropdown AFTER Response Type (when Response Type is ORDER for GETSCHEMA/ERRORRESPONSE/ERRORTIMEOUT)
+  showOrderTypeAfterResponse = computed(() => {
+    const transactionType = this.selectedTransactionType();
+    const responseType = this.selectedResponseType();
+    
+    return (transactionType === TransactionType.GETSCHEMA ||
+            transactionType === TransactionType.ERRORRESPONSE ||
+            transactionType === TransactionType.ERRORTIMEOUT) &&
+           responseType === ResponseType.ORDER;
   });
 
   // Computed: Check if file input should be disabled (for GETSCHEMA, ERRORRESPONSE, ERRORTIMEOUT)
@@ -171,6 +182,8 @@ export class DashboardComponent implements OnDestroy {
         value === TransactionType.ERRORRESPONSE || 
         value === TransactionType.ERRORTIMEOUT) {
       this.selectedFile.set(null);
+      // Reset ORDER TYPE when switching to these types (will show again if ORDER is selected as Response Type)
+      this.selectedOrderType.set(OrderType.LTL);
     }
   }
 
@@ -216,6 +229,10 @@ export class DashboardComponent implements OnDestroy {
   // Handle Response Type change
   onResponseTypeChange(value: string): void {
     this.selectedResponseType.set(value as ResponseType);
+    // Reset ORDER TYPE to default when Response Type changes to ORDER
+    if (value === ResponseType.ORDER) {
+      this.selectedOrderType.set(OrderType.LTL);
+    }
   }
 
   /**
@@ -294,8 +311,8 @@ export class DashboardComponent implements OnDestroy {
       responseType: this.selectedResponseType()
     };
 
-    // Add ORDER TYPE only if Transaction Type is ORDER
-    if (this.selectedTransactionType() === TransactionType.ORDER) {
+    // Add ORDER TYPE if Transaction Type is ORDER or Response Type is ORDER
+    if (this.showOrderTypeAfterTransaction() || this.showOrderTypeAfterResponse()) {
       formData.orderType = this.selectedOrderType();
     }
 
