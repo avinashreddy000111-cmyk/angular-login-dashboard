@@ -15,8 +15,8 @@ export enum TransactionType {
   ORDER = 'ORDER',
   ASN = 'ASN',
   GETSCHEMA = 'GETSCHEMA',
-  ERRORRESPONSE = 'ERRORRESPONSE',
-  ERRORTIMEOUT = 'ERRORTIMEOUT'
+  //ERRORRESPONSE = 'ERRORRESPONSE',
+  //ERRORTIMEOUT = 'ERRORTIMEOUT'
 }
 
 // Order Type - only shown when Transaction Type is ORDER
