@@ -97,8 +97,8 @@ export class DashboardComponent implements OnDestroy {
       case TransactionType.ASN:
         return this.asnResponseTypes;
       case TransactionType.GETSCHEMA:
-      case TransactionType.ERRORRESPONSE:
-      case TransactionType.ERRORTIMEOUT:
+      //case TransactionType.ERRORRESPONSE: -- need to add for testing
+      //case TransactionType.ERRORTIMEOUT: -- need to add for testing
         return this.schemaAndErrorResponseTypes;
       default:
         return this.orderResponseTypes;
@@ -115,18 +115,20 @@ export class DashboardComponent implements OnDestroy {
     const transactionType = this.selectedTransactionType();
     const responseType = this.selectedResponseType();
     
-    return (transactionType === TransactionType.GETSCHEMA ||
-            transactionType === TransactionType.ERRORRESPONSE ||
-            transactionType === TransactionType.ERRORTIMEOUT) &&
+    return (transactionType === TransactionType.GETSCHEMA &&
+    //return (transactionType === TransactionType.GETSCHEMA || -- need to change for tesing
+            //transactionType === TransactionType.ERRORRESPONSE ||
+            //transactionType === TransactionType.ERRORTIMEOUT) &&
            responseType === ResponseType.ORDER;
   });
 
   // Computed: Check if file input should be disabled (for GETSCHEMA, ERRORRESPONSE, ERRORTIMEOUT)
   isFileInputDisabled = computed(() => {
     const transactionType = this.selectedTransactionType();
-    return transactionType === TransactionType.GETSCHEMA ||
-           transactionType === TransactionType.ERRORRESPONSE ||
-           transactionType === TransactionType.ERRORTIMEOUT;
+    return transactionType === TransactionType.GETSCHEMA
+    //return transactionType === TransactionType.GETSCHEMA || -- need to change for testing
+           //transactionType === TransactionType.ERRORRESPONSE ||
+           //transactionType === TransactionType.ERRORTIMEOUT;
   });
 
   // Computed: Check if process button should be disabled
@@ -155,8 +157,8 @@ export class DashboardComponent implements OnDestroy {
           validResponseTypes = this.asnResponseTypes;
           break;
         case TransactionType.GETSCHEMA:
-        case TransactionType.ERRORRESPONSE:
-        case TransactionType.ERRORTIMEOUT:
+        //case TransactionType.ERRORRESPONSE: -- need to change for testing
+        //case TransactionType.ERRORTIMEOUT: -- need to change for testing
           validResponseTypes = this.schemaAndErrorResponseTypes;
           break;
         default:
@@ -178,9 +180,10 @@ export class DashboardComponent implements OnDestroy {
       this.selectedOrderType.set(OrderType.LTL);
     }
     // Clear file when switching to types that don't need file
-    if (value === TransactionType.GETSCHEMA || 
-        value === TransactionType.ERRORRESPONSE || 
-        value === TransactionType.ERRORTIMEOUT) {
+    if (value === TransactionType.GETSCHEMA
+    //if (value === TransactionType.GETSCHEMA || -- need to change for testing
+      //  value === TransactionType.ERRORRESPONSE || 
+        //value === TransactionType.ERRORTIMEOUT) {
       this.selectedFile.set(null);
       // Reset ORDER TYPE when switching to these types (will show again if ORDER is selected as Response Type)
       this.selectedOrderType.set(OrderType.LTL);
@@ -287,9 +290,10 @@ export class DashboardComponent implements OnDestroy {
    */
   processFile(): void {
     const transactionType = this.selectedTransactionType();
-    const noFileRequired = transactionType === TransactionType.GETSCHEMA ||
-                          transactionType === TransactionType.ERRORRESPONSE ||
-                          transactionType === TransactionType.ERRORTIMEOUT;
+    const noFileRequired = transactionType === TransactionType.GETSCHEMA
+    //const noFileRequired = transactionType === TransactionType.GETSCHEMA || -- need to change for testing
+      //                    transactionType === TransactionType.ERRORRESPONSE ||
+        //                  transactionType === TransactionType.ERRORTIMEOUT;
     const file = this.selectedFile();
     
     // For types that need file, require file
