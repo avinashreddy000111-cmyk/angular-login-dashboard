@@ -105,8 +105,8 @@
 // Main Content - CHANGED TO SINGLE COLUMN
 .dashboard-main {
   flex: 1;
-  padding: 2rem;
-  max-width: 1200px;
+  padding: 2rem 3rem;
+  max-width: 1600px;
   margin: 0 auto;
   width: 100%;
   box-sizing: border-box;
@@ -126,7 +126,7 @@
 .output-section {
   background: white;
   border-radius: 16px;
-  padding: 1.5rem;
+  padding: 2rem 2.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   width: 100%;
 }
