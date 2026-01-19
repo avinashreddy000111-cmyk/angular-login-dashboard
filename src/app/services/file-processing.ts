@@ -74,9 +74,14 @@ export class FileProcessingService {
       }
     };
 
-    // Add ORDER TYPE only if Transaction Type is ORDER
+    // Add ORDER TYPE only if Transaction Type is ORDER or Transactiontype is getschema and responsetype is order
     if (formData.transactionType === TransactionType.ORDER && formData.orderType) {
       request.Request['ORDER TYPE'] = formData.orderType;
+    }
+    if (formData.transactionType === TransactionType.GETSCHEMA) {
+      if (formData.responseType === ResponseType.ORDER && formData.orderType) {
+        request.Request['ORDER TYPE'] = formData.orderType;
+      }
     }
 
     // Only add Input File if content exists
