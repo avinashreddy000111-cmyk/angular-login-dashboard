@@ -1,4 +1,4 @@
-// Dashboard Styles
+// Dashboard Styles - Vertical Layout
 .dashboard-container {
   min-height: 100vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
@@ -102,25 +102,22 @@
   }
 }
 
-// Main Content
+// Main Content - CHANGED TO SINGLE COLUMN
 .dashboard-main {
   flex: 1;
   padding: 2rem;
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
   width: 100%;
   box-sizing: border-box;
 }
 
+// UPDATED: Single column layout
 .content-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-  margin-bottom: 2rem;
-
-  @media (max-width: 900px) {
-    grid-template-columns: 1fr;
-  }
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
 }
 
 // Panel Styles
@@ -131,6 +128,7 @@
   border-radius: 16px;
   padding: 1.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  width: 100%;
 }
 
 // Disabled panel state
@@ -180,7 +178,6 @@
     border-radius: 12px;
   }
 
-  // NEW: File count badge
   .file-count {
     margin-left: auto;
     background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
@@ -192,11 +189,15 @@
   }
 }
 
-// Config Form
+// Config Form - UPDATED for horizontal layout
 .config-form {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1.25rem;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
 }
 
 .form-group {
@@ -213,7 +214,7 @@
   select {
     width: 100%;
     padding: 0.75rem 1rem;
-    padding-right: 2.5rem; // Space for the custom arrow
+    padding-right: 2.5rem;
     border: 1px solid #e5e7eb;
     border-radius: 8px;
     font-size: 1rem;
@@ -222,14 +223,13 @@
     cursor: pointer;
     transition: all 0.2s;
 
-    // Custom dropdown arrow - bigger and moved left
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
     background-repeat: no-repeat;
-    background-position: right 1.25rem center; // Moved more to the left (was 0.75rem)
-    background-size: 1.5rem; // Bigger arrow (was default ~1rem)
+    background-position: right 1.25rem center;
+    background-size: 1.5rem;
 
     &:focus {
       outline: none;
@@ -242,13 +242,13 @@
     }
   }
 
-  // Special styling for ORDER TYPE dropdown
   &.order-type-group {
     animation: slideDown 0.3s ease-out;
     background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
     padding: 1rem;
     border-radius: 10px;
     margin: 0.25rem 0;
+    grid-column: 1 / -1;
 
     label {
       color: #667eea;
@@ -256,8 +256,6 @@
 
     select {
       border-color: rgba(102, 126, 234, 0.3);
-      
-      // Custom arrow for ORDER TYPE with purple color
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23667eea' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
       
       &:focus {
@@ -268,7 +266,6 @@
   }
 }
 
-// Animation for ORDER TYPE appearing
 @keyframes slideDown {
   from {
     opacity: 0;
@@ -500,7 +497,6 @@
     }
   }
 
-  // Generic Error Message
   .error-message {
     display: flex;
     align-items: flex-start;
@@ -535,7 +531,6 @@
       }
     }
 
-    // Timeout Error specific styling
     &.timeout-error {
       background: linear-gradient(135deg, #fef3c7 0%, #fef2f2 100%);
       border-color: #f59e0b;
@@ -558,7 +553,6 @@
   }
 }
 
-// Fade in animation for error messages
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -570,7 +564,6 @@
   }
 }
 
-// Pulse animation for timeout icon
 @keyframes pulse {
   0%, 100% {
     opacity: 1;
@@ -580,8 +573,6 @@
   }
 }
 
-// ============ NEW: Multiple Results Styles ============
-
 // Results container
 .results-container {
   display: flex;
@@ -589,20 +580,12 @@
   gap: 12px;
 }
 
-// Results actions (Download All, Clear All)
 .results-actions {
   display: flex;
   gap: 12px;
   padding-bottom: 12px;
   border-bottom: 1px solid #e5e7eb;
   margin-bottom: 4px;
-}
-
-// Single clear action (for single file)
-.single-clear-action {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 8px;
 }
 
 .download-all-btn {
@@ -629,31 +612,6 @@
   }
 }
 
-.clear-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background: rgba(107, 114, 128, 0.1);
-  color: #6b7280;
-  border: 1px solid rgba(107, 114, 128, 0.3);
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s ease;
-
-  svg {
-    width: 18px;
-    height: 18px;
-  }
-
-  &:hover {
-    background: rgba(107, 114, 128, 0.2);
-    color: #4b5563;
-  }
-}
-
-// Result Card - Updated for multiple items
 .result-card {
   display: flex;
   align-items: center;
@@ -671,7 +629,6 @@
     transform: translateX(4px);
   }
 
-  // Success state (default)
   &.success {
     .result-icon {
       background: rgba(16, 185, 129, 0.2);
@@ -682,7 +639,6 @@
     }
   }
 
-  // Failed state
   &.failed {
     background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%);
     border-color: rgba(239, 68, 68, 0.2);
@@ -720,7 +676,7 @@
 
   .result-info {
     flex: 1;
-    min-width: 0; // Allow text truncation
+    min-width: 0;
 
     .result-name {
       display: block;
@@ -751,7 +707,6 @@
   }
 }
 
-// Slide in animation for result cards
 @keyframes slideIn {
   from {
     opacity: 0;
@@ -763,7 +718,6 @@
   }
 }
 
-// Staggered animation for multiple cards
 .result-card:nth-child(1) { animation-delay: 0s; }
 .result-card:nth-child(2) { animation-delay: 0.1s; }
 .result-card:nth-child(3) { animation-delay: 0.2s; }
@@ -816,11 +770,14 @@
     padding: 1rem;
   }
 
+  .config-form {
+    grid-template-columns: 1fr;
+  }
+
   .results-actions {
     flex-direction: column;
     
-    .download-all-btn,
-    .clear-btn {
+    .download-all-btn {
       width: 100%;
       justify-content: center;
     }
