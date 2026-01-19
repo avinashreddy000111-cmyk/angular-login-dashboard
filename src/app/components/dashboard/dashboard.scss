@@ -105,11 +105,15 @@
 // Main Content - CHANGED TO SINGLE COLUMN
 .dashboard-main {
   flex: 1;
-  padding: 2rem 3rem;
-  max-width: 1600px;
+  padding: 2rem 4rem;
+  max-width: 95%;
   margin: 0 auto;
   width: 100%;
   box-sizing: border-box;
+  
+  @media (min-width: 1400px) {
+    max-width: 1800px;
+  }
 }
 
 // UPDATED: Single column layout
