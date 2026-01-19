@@ -96,6 +96,22 @@
             </div>
           }
         </div>
+
+        <!-- Submit Button -->
+        <button 
+          class="submit-btn" 
+          [disabled]="isProcessDisabled() || isProcessing()"
+          (click)="processFile()">
+          @if (isProcessing()) {
+            <span class="spinner"></span>
+            Processing... (60s timeout)
+          } @else {
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+            Submit
+          }
+        </button>
       </section>
 
       <!-- Upload Panel -->
@@ -162,29 +178,6 @@
             </div>
           }
         </div>
-
-        <!-- Process Button -->
-        <button 
-          class="process-btn" 
-          [class.schema-btn]="selectedTransactionType() === TransactionType.GETSCHEMA"
-          [disabled]="isProcessDisabled() || isProcessing()"
-          (click)="processFile()">
-          @if (isProcessing()) {
-            <span class="spinner"></span>
-            Processing... (60s timeout)
-          } @else {
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polygon points="5 3 19 12 5 21 5 3"/>
-            </svg>
-            @if (selectedTransactionType() === TransactionType.GETSCHEMA) {
-              Get Schema
-            } @else if (isFileInputDisabled()) {
-              Process {{ selectedTransactionType() }}
-            } @else {
-              Process File
-            }
-          }
-        </button>
       </section>
     </div>
 
@@ -287,10 +280,3 @@
           }
         </div>
       } @else {
-        <div class="empty-state">
-          <p>Processed files will appear here</p>
-        </div>
-      }
-    </section>
-  </main>
-</div>
