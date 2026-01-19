@@ -116,7 +116,7 @@
   }
 }
 
-// UPDATED: Single column layout
+// UPDATED: Single section layout (config panel only)
 .content-grid {
   display: flex;
   flex-direction: column;
@@ -126,29 +126,12 @@
 
 // Panel Styles
 .config-panel,
-.upload-panel,
 .output-section {
   background: white;
   border-radius: 16px;
   padding: 2rem 2.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   width: 100%;
-}
-
-// Disabled panel state
-.upload-panel.disabled {
-  opacity: 0.6;
-  
-  .upload-zone {
-    cursor: not-allowed;
-    background: #f5f5f5;
-    border-color: #d1d5db;
-    
-    &:hover {
-      border-color: #d1d5db;
-      background: #f5f5f5;
-    }
-  }
 }
 
 .panel-header {
@@ -285,37 +268,57 @@
   }
 }
 
-// Submit Button (at end of configuration panel)
-.submit-btn {
-  width: 100%;
-  padding: 1rem;
-  margin-top: 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
+// Upload Section (inside config panel)
+.upload-section {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  
+  &.disabled {
+    opacity: 0.6;
+    
+    .upload-zone {
+      cursor: not-allowed;
+      background: #f5f5f5;
+      border-color: #d1d5db;
+      
+      &:hover {
+        border-color: #d1d5db;
+        background: #f5f5f5;
+      }
+    }
+  }
+}
+
+.upload-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  transition: all 0.3s;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
 
   svg {
     width: 20px;
     height: 20px;
+    min-width: 20px;
+    color: #667eea;
   }
 
-  &:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  h3 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+  .disabled-badge {
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: #6b7280;
+    background: #f3f4f6;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
   }
 }
 
@@ -326,7 +329,6 @@
   padding: 1.5rem;
   text-align: center;
   transition: all 0.3s;
-  margin-bottom: 1rem;
   min-height: 120px;
   display: flex;
   align-items: center;
@@ -480,10 +482,11 @@
   }
 }
 
-// Process Button
-.process-btn {
+// Submit Button (at end of configuration panel)
+.submit-btn {
   width: 100%;
   padding: 1rem;
+  margin-top: 1.5rem;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
