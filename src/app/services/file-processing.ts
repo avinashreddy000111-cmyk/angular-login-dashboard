@@ -78,10 +78,11 @@ export class FileProcessingService {
     if (formData.transactionType === TransactionType.ORDER && formData.orderType) {
       request.Request['ORDER TYPE'] = formData.orderType;
     }
-    if (formData.transactionType === TransactionType.GETSCHEMA) {
-      if (formData.responseType === ResponseType.ORDER && formData.orderType) {
-        request.Request['ORDER TYPE'] = formData.orderType;
-      }
+    // Add ORDER TYPE if Transaction Type is GETSCHEMA and Response Type is ORDER
+    if (formData.transactionType === TransactionType.GETSCHEMA && 
+        formData.responseType === ResponseType.ORDER && 
+        formData.orderType) {
+      request.Request['ORDER TYPE'] = formData.orderType;
     }
 
     // Only add Input File if content exists
