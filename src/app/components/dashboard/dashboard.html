@@ -97,6 +97,72 @@
           }
         </div>
 
+        <!-- Upload Section (inside config panel) -->
+        <div class="upload-section" [class.disabled]="isFileInputDisabled()">
+          <div class="upload-header">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <h3>Input File</h3>
+            @if (isFileInputDisabled()) {
+              <span class="disabled-badge">Not required for {{ selectedTransactionType() }}</span>
+            }
+          </div>
+
+          <!-- Upload Zone -->
+          <div 
+            class="upload-zone"
+            [class.drag-over]="isDragOver()"
+            [class.has-file]="selectedFile()"
+            [class.disabled]="isFileInputDisabled()"
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave($event)"
+            (drop)="onDrop($event)">
+            
+            @if (selectedFile()) {
+              <div class="file-preview">
+                <div class="file-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                  </svg>
+                </div>
+                <div class="file-info">
+                  <span class="file-name">{{ selectedFile()?.name }}</span>
+                  <span class="file-size">{{ (selectedFile()?.size || 0) / 1024 | number:'1.1-1' }} KB</span>
+                </div>
+                <button class="remove-file" (click)="removeFile()">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </button>
+              </div>
+            } @else {
+              <div class="upload-placeholder" [class.disabled]="isFileInputDisabled()">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                @if (isFileInputDisabled()) {
+                  <p>File upload disabled</p>
+                  <span>{{ selectedTransactionType() }} does not require a file</span>
+                } @else {
+                  <p>Drag & drop your file here</p>
+                  <span>or</span>
+                  <label class="browse-btn">
+                    Browse Files
+                    <input type="file" (change)="onFileSelected($event)" hidden>
+                  </label>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
         <!-- Submit Button -->
         <button 
           class="submit-btn" 
@@ -112,72 +178,6 @@
             Submit
           }
         </button>
-      </section>
-
-      <!-- Upload Panel -->
-      <section class="upload-panel" [class.disabled]="isFileInputDisabled()">
-        <div class="panel-header">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="17 8 12 3 7 8"/>
-            <line x1="12" y1="3" x2="12" y2="15"/>
-          </svg>
-          <h2>Input File</h2>
-          @if (isFileInputDisabled()) {
-            <span class="disabled-badge">Not required for {{ selectedTransactionType() }}</span>
-          }
-        </div>
-
-        <!-- Upload Zone -->
-        <div 
-          class="upload-zone"
-          [class.drag-over]="isDragOver()"
-          [class.has-file]="selectedFile()"
-          [class.disabled]="isFileInputDisabled()"
-          (dragover)="onDragOver($event)"
-          (dragleave)="onDragLeave($event)"
-          (drop)="onDrop($event)">
-          
-          @if (selectedFile()) {
-            <div class="file-preview">
-              <div class="file-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
-                </svg>
-              </div>
-              <div class="file-info">
-                <span class="file-name">{{ selectedFile()?.name }}</span>
-                <span class="file-size">{{ (selectedFile()?.size || 0) / 1024 | number:'1.1-1' }} KB</span>
-              </div>
-              <button class="remove-file" (click)="removeFile()">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-              </button>
-            </div>
-          } @else {
-            <div class="upload-placeholder" [class.disabled]="isFileInputDisabled()">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="17 8 12 3 7 8"/>
-                <line x1="12" y1="3" x2="12" y2="15"/>
-              </svg>
-              @if (isFileInputDisabled()) {
-                <p>File upload disabled</p>
-                <span>{{ selectedTransactionType() }} does not require a file</span>
-              } @else {
-                <p>Drag & drop your file here</p>
-                <span>or</span>
-                <label class="browse-btn">
-                  Browse Files
-                  <input type="file" (change)="onFileSelected($event)" hidden>
-                </label>
-              }
-            </div>
-          }
-        </div>
       </section>
     </div>
 
