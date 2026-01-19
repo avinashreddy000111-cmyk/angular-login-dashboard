@@ -52,18 +52,6 @@
             </select>
           </div>
 
-          <!-- ORDER TYPE - After Transaction Type (when Transaction Type is ORDER) -->
-          @if (showOrderTypeAfterTransaction()) {
-            <div class="form-group order-type-group">
-              <label>Order Type</label>
-              <select [ngModel]="selectedOrderType()" (ngModelChange)="selectedOrderType.set($event)">
-                @for (type of orderTypes; track type) {
-                  <option [value]="type">{{ type.replace('_', ' ') }}</option>
-                }
-              </select>
-            </div>
-          }
-
           <!-- Format -->
           <div class="form-group">
             <label>Format</label>
@@ -83,6 +71,18 @@
               }
             </select>
           </div>
+
+          <!-- ORDER TYPE - After Transaction Type (when Transaction Type is ORDER) -->
+          @if (showOrderTypeAfterTransaction()) {
+            <div class="form-group order-type-group">
+              <label>Order Type</label>
+              <select [ngModel]="selectedOrderType()" (ngModelChange)="selectedOrderType.set($event)">
+                @for (type of orderTypes; track type) {
+                  <option [value]="type">{{ type.replace('_', ' ') }}</option>
+                }
+              </select>
+            </div>
+          }
 
           <!-- ORDER TYPE - After Response Type (when Response Type is ORDER for GETSCHEMA/ERRORRESPONSE/ERRORTIMEOUT) -->
           @if (showOrderTypeAfterResponse()) {
