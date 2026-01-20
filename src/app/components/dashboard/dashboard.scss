@@ -1,4 +1,4 @@
-// Additional styles for the cancel button in the processing indicator
+// Updated styles for the cancel button (using span instead of nested button)
 // Add these styles to your dashboard.scss file
 
 .submit-btn {
@@ -17,7 +17,7 @@
     text-align: center;
   }
 
-  // Cancel button styles
+  // Cancel button styles (using span with role="button")
   .cancel-btn {
     display: flex;
     align-items: center;
@@ -32,11 +32,13 @@
     cursor: pointer;
     transition: all 0.2s ease;
     flex-shrink: 0;
+    user-select: none;
 
     svg {
       width: 16px;
       height: 16px;
       stroke: currentColor;
+      pointer-events: none; // Prevent event issues with SVG
     }
 
     &:hover {
@@ -55,6 +57,3 @@
     }
   }
 }
-
-// Alternative styles if your button has different base styles
-// Adjust colors and sizing as needed for your design system
