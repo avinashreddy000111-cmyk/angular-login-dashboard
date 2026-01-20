@@ -259,6 +259,29 @@ export class DashboardComponent implements OnDestroy {
   }
 
   /**
+   * Cancel the current processing request
+   * Called when user clicks the X button on the processing indicator
+   */
+  cancelRequest(): void {
+    console.log('Request cancelled by user');
+    
+    // Unsubscribe from the current request to stop it
+    if (this.currentRequest) {
+      this.currentRequest.unsubscribe();
+      this.currentRequest = null;
+    }
+    
+    // Reset processing state
+    this.isProcessing.set(false);
+    
+    // Clear any partial state
+    this.currentUUID.set(null);
+    
+    // Keep form values intact so user can retry or modify
+    // Don't clear the file or form selections
+  }
+
+  /**
    * Handle request error (including timeout)
    */
   private handleRequestError(error: any): void {
@@ -278,29 +301,6 @@ export class DashboardComponent implements OnDestroy {
     
     // Reset dashboard for next request
     this.resetForNextRequest();
-  }
-
-  /**
-   * Cancel ongoing processing request
-   */
-  cancelProcessing(): void {
-    console.log('Processing cancelled by user');
-    
-    // Cancel the current request
-    if (this.currentRequest) {
-      this.currentRequest.unsubscribe();
-      this.currentRequest = null;
-    }
-    
-    // Reset processing state
-    this.isProcessing.set(false);
-    
-    // Optionally set a message to inform the user
-    this.errorMessage.set('Processing cancelled by user');
-    this.isTimeoutError.set(false);
-    
-    // Clear the UUID
-    this.currentUUID.set(null);
   }
 
   /**
