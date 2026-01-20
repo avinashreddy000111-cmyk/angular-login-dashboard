@@ -156,13 +156,23 @@
           </div>
         }
 
-        <!-- Submit Button / Processing Indicator -->
-        @if (isProcessing()) {
-          <div class="processing-container">
-            <div class="processing-indicator">
+        <!-- Submit Button -->
+        <div class="submit-section">
+          <button 
+            class="submit-btn" 
+            [disabled]="isProcessDisabled() || isProcessing()"
+            (click)="processFile()">
+            @if (isProcessing()) {
               <span class="spinner"></span>
-              <span class="processing-text">Processing... (60s timeout)</span>
-            </div>
+              Processing... (60s timeout)
+            } @else {
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
+              Submit
+            }
+          </button>
+          @if (isProcessing()) {
             <button 
               class="cancel-btn" 
               (click)="cancelRequest()"
@@ -172,18 +182,8 @@
                 <line x1="6" y1="6" x2="18" y2="18"/>
               </svg>
             </button>
-          </div>
-        } @else {
-          <button 
-            class="submit-btn" 
-            [disabled]="isProcessDisabled()"
-            (click)="processFile()">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polygon points="5 3 19 12 5 21 5 3"/>
-            </svg>
-            Submit
-          </button>
-        }
+          }
+        </div>
       </section>
     </div>
 
