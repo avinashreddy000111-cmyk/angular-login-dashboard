@@ -281,6 +281,29 @@ export class DashboardComponent implements OnDestroy {
   }
 
   /**
+   * Cancel ongoing processing request
+   */
+  cancelProcessing(): void {
+    console.log('Processing cancelled by user');
+    
+    // Cancel the current request
+    if (this.currentRequest) {
+      this.currentRequest.unsubscribe();
+      this.currentRequest = null;
+    }
+    
+    // Reset processing state
+    this.isProcessing.set(false);
+    
+    // Optionally set a message to inform the user
+    this.errorMessage.set('Processing cancelled by user');
+    this.isTimeoutError.set(false);
+    
+    // Clear the UUID
+    this.currentUUID.set(null);
+  }
+
+  /**
    * Process button click handler
    * Builds JSON request and sends to backend
    * Waits synchronously for response with 60-second timeout
