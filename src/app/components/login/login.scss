@@ -5,6 +5,8 @@ $primary-color: #6366f1;
 $primary-hover: #4f46e5;
 $error-color: #ef4444;
 $error-bg: #fef2f2;
+$warning-color: #f59e0b;
+$warning-bg: #fef3c7;
 $text-primary: #1f2937;
 $text-secondary: #6b7280;
 $border-color: #e5e7eb;
@@ -136,6 +138,66 @@ $white: #ffffff;
     font-size: 0.9375rem;
     color: $text-secondary;
     margin: 0;
+  }
+}
+
+// Session Expired Alert - Orange/Warning style
+.session-expired-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: linear-gradient(135deg, $warning-bg 0%, #fde68a 100%);
+  border: 1px solid $warning-color;
+  border-radius: 12px;
+  margin-bottom: 1.25rem;
+  animation: slideIn 0.3s ease-out;
+
+  .session-icon {
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    color: #b45309;
+    flex-shrink: 0;
+  }
+
+  span {
+    flex: 1;
+    font-size: 0.875rem;
+    color: #92400e;
+    font-weight: 500;
+  }
+
+  .close-btn {
+    padding: 4px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #b45309;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    border-radius: 4px;
+
+    &:hover {
+      opacity: 1;
+      background: rgba(180, 83, 9, 0.1);
+    }
+
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
