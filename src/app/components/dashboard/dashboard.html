@@ -15,8 +15,8 @@
       </div>
     </div>
     <div class="user-section">
-      <div class="user-avatar">a</div>
-      <span class="user-name">avinash</span>
+      <div class="user-avatar">A</div>
+      <span class="user-name">admin</span>
       <button class="logout-btn" (click)="logout()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -41,11 +41,11 @@
           <h2>Configuration</h2>
         </div>
 
-        <div class="config-form">
+        <div class="config-form" [class.disabled]="isProcessing()">
           <!-- Transaction Type -->
           <div class="form-group">
             <label>Transaction Type</label>
-            <select [ngModel]="selectedTransactionType()" (ngModelChange)="onTransactionTypeChange($event)">
+            <select [ngModel]="selectedTransactionType()" (ngModelChange)="onTransactionTypeChange($event)" [disabled]="isProcessing()">
               @for (type of transactionTypes; track type) {
                 <option [value]="type">{{ type }}</option>
               }
@@ -55,7 +55,7 @@
           <!-- Format -->
           <div class="form-group">
             <label>Format</label>
-            <select [ngModel]="selectedFormat()" (ngModelChange)="selectedFormat.set($event)">
+            <select [ngModel]="selectedFormat()" (ngModelChange)="selectedFormat.set($event)" [disabled]="isProcessing()">
               @for (format of formats; track format) {
                 <option [value]="format">{{ format }}</option>
               }
@@ -65,7 +65,7 @@
           <!-- Response Type - Filtered based on Transaction Type -->
           <div class="form-group">
             <label>Response Type</label>
-            <select [ngModel]="selectedResponseType()" (ngModelChange)="onResponseTypeChange($event)">
+            <select [ngModel]="selectedResponseType()" (ngModelChange)="onResponseTypeChange($event)" [disabled]="isProcessing()">
               @for (type of filteredResponseTypes(); track type) {
                 <option [value]="type">{{ type }}</option>
               }
@@ -76,7 +76,7 @@
           @if (showOrderTypeAfterTransaction()) {
             <div class="form-group order-type-group">
               <label>Order Type</label>
-              <select [ngModel]="selectedOrderType()" (ngModelChange)="selectedOrderType.set($event)">
+              <select [ngModel]="selectedOrderType()" (ngModelChange)="selectedOrderType.set($event)" [disabled]="isProcessing()">
                 @for (type of orderTypes; track type) {
                   <option [value]="type">{{ type.replace('_', ' ') }}</option>
                 }
@@ -88,7 +88,7 @@
           @if (showOrderTypeAfterResponse()) {
             <div class="form-group order-type-group">
               <label>Order Type</label>
-              <select [ngModel]="selectedOrderType()" (ngModelChange)="selectedOrderType.set($event)">
+              <select [ngModel]="selectedOrderType()" (ngModelChange)="selectedOrderType.set($event)" [disabled]="isProcessing()">
                 @for (type of orderTypes; track type) {
                   <option [value]="type">{{ type.replace('_', ' ') }}</option>
                 }
@@ -99,7 +99,7 @@
 
         <!-- Upload Section (inside config panel) - Only show when file is required -->
         @if (!isFileInputDisabled()) {
-          <div class="upload-section">
+          <div class="upload-section" [class.disabled]="isProcessing()">
             <div class="upload-header">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -114,9 +114,10 @@
               class="upload-zone"
               [class.drag-over]="isDragOver()"
               [class.has-file]="selectedFile()"
-              (dragover)="onDragOver($event)"
-              (dragleave)="onDragLeave($event)"
-              (drop)="onDrop($event)">
+              [class.disabled]="isProcessing()"
+              (dragover)="!isProcessing() && onDragOver($event)"
+              (dragleave)="!isProcessing() && onDragLeave($event)"
+              (drop)="!isProcessing() && onDrop($event)">
               
               @if (selectedFile()) {
                 <div class="file-preview">
@@ -130,7 +131,7 @@
                     <span class="file-name">{{ selectedFile()?.name }}</span>
                     <span class="file-size">{{ (selectedFile()?.size || 0) / 1024 | number:'1.1-1' }} KB</span>
                   </div>
-                  <button class="remove-file" (click)="removeFile()">
+                  <button class="remove-file" (click)="removeFile()" [disabled]="isProcessing()" [class.disabled]="isProcessing()">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <line x1="18" y1="6" x2="6" y2="18"/>
                       <line x1="6" y1="6" x2="18" y2="18"/>
@@ -138,7 +139,7 @@
                   </button>
                 </div>
               } @else {
-                <div class="upload-placeholder">
+                <div class="upload-placeholder" [class.disabled]="isProcessing()">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                     <polyline points="17 8 12 3 7 8"/>
@@ -146,9 +147,9 @@
                   </svg>
                   <p>Drag & drop your file here</p>
                   <span>or</span>
-                  <label class="browse-btn">
+                  <label class="browse-btn" [class.disabled]="isProcessing()">
                     Browse Files
-                    <input type="file" (change)="onFileSelected($event)" hidden>
+                    <input type="file" (change)="onFileSelected($event)" hidden [disabled]="isProcessing()">
                   </label>
                 </div>
               }
