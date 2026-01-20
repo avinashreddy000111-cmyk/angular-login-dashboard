@@ -1,6 +1,6 @@
 // src/app/components/dashboard/dashboard.ts
 
-import { Component, inject, signal, computed, OnDestroy, effect } from '@angular/core';
+import { Component, inject, signal, computed, OnDestroy, OnInit, effect, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -24,7 +24,7 @@ import {
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss'
 })
-export class DashboardComponent implements OnDestroy {
+export class DashboardComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   authService = inject(AuthService);
   private fileService = inject(FileProcessingService);
@@ -32,10 +32,15 @@ export class DashboardComponent implements OnDestroy {
   // Subscription management for cleanup
   private currentRequest: Subscription | null = null;
   private countdownSubscription: Subscription | null = null;
+  private idleTimerSubscription: Subscription | null = null;
 
-  // Countdown timer
+  // Countdown timer for processing
   remainingSeconds = signal<number>(60);
   private readonly TIMEOUT_SECONDS = 60;
+
+  // Idle timeout configuration (5 minutes = 300 seconds)
+  private readonly IDLE_TIMEOUT_SECONDS = 300;
+  private lastActivityTime = Date.now();
 
   // Enum references for template
   TransactionType = TransactionType;
@@ -174,6 +179,90 @@ export class DashboardComponent implements OnDestroy {
       }
     }, { allowSignalWrites: true });
   }
+
+  ngOnInit(): void {
+    // Start the idle timer when component initializes
+    this.startIdleTimer();
+  }
+
+  // ========== IDLE TIMEOUT - AUTO LOGOUT ==========
+
+  /**
+   * Listen for user activity events to reset idle timer
+   */
+  @HostListener('window:mousemove')
+  @HostListener('window:click')
+  @HostListener('window:keypress')
+  @HostListener('window:keydown')
+  @HostListener('window:scroll')
+  @HostListener('window:touchstart')
+  @HostListener('document:visibilitychange')
+  onUserActivity(): void {
+    this.resetIdleTimer();
+  }
+
+  /**
+   * Start the idle timer - checks every second if user has been idle
+   */
+  private startIdleTimer(): void {
+    this.lastActivityTime = Date.now();
+
+    // Clear any existing idle timer
+    this.stopIdleTimer();
+
+    // Check every second if user has been idle for too long
+    this.idleTimerSubscription = interval(1000).subscribe(() => {
+      const currentTime = Date.now();
+      const idleTimeSeconds = Math.floor((currentTime - this.lastActivityTime) / 1000);
+
+      if (idleTimeSeconds >= this.IDLE_TIMEOUT_SECONDS) {
+        console.log('User idle for 5 minutes. Auto-logout triggered.');
+        this.autoLogout();
+      }
+    });
+  }
+
+  /**
+   * Reset the idle timer - called on any user activity
+   */
+  private resetIdleTimer(): void {
+    this.lastActivityTime = Date.now();
+  }
+
+  /**
+   * Stop the idle timer
+   */
+  private stopIdleTimer(): void {
+    if (this.idleTimerSubscription) {
+      this.idleTimerSubscription.unsubscribe();
+      this.idleTimerSubscription = null;
+    }
+  }
+
+  /**
+   * Auto logout due to inactivity
+   */
+  private autoLogout(): void {
+    // Stop all timers
+    this.stopIdleTimer();
+    this.stopCountdown();
+
+    // Cancel any pending request
+    if (this.currentRequest) {
+      this.currentRequest.unsubscribe();
+      this.currentRequest = null;
+    }
+
+    // Perform logout
+    this.authService.logout();
+    
+    // Navigate to login with a message indicating session expired
+    this.router.navigate(['/login'], { 
+      queryParams: { sessionExpired: 'true' } 
+    });
+  }
+
+  // ========== END IDLE TIMEOUT ==========
 
   // Handle Transaction Type change
   onTransactionTypeChange(value: string): void {
@@ -517,9 +606,15 @@ export class DashboardComponent implements OnDestroy {
     });
   }
 
+  /**
+   * Manual logout - called when user clicks logout button
+   */
   logout(): void {
-    // Cancel any pending request before logout
+    // Stop all timers
+    this.stopIdleTimer();
     this.stopCountdown();
+    
+    // Cancel any pending request before logout
     if (this.currentRequest) {
       this.currentRequest.unsubscribe();
       this.currentRequest = null;
@@ -532,6 +627,7 @@ export class DashboardComponent implements OnDestroy {
    * Cleanup on component destroy
    */
   ngOnDestroy(): void {
+    this.stopIdleTimer();
     this.stopCountdown();
     if (this.currentRequest) {
       this.currentRequest.unsubscribe();
