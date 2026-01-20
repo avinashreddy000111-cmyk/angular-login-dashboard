@@ -278,7 +278,6 @@ export class DashboardComponent implements OnDestroy {
     this.currentUUID.set(null);
     
     // Keep form values intact so user can retry or modify
-    // Don't clear the file or form selections
   }
 
   /**
