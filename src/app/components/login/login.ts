@@ -29,6 +29,9 @@ export class LoginComponent implements OnInit {
   isLoading = signal<boolean>(false);
   errorMessage = signal<string | null>(null);
   showPassword = signal<boolean>(false);
+  
+  // Session expired message
+  sessionExpiredMessage = signal<string | null>(null);
 
   private returnUrl: string = '/dashboard';
 
@@ -36,6 +39,7 @@ export class LoginComponent implements OnInit {
     this.initializeForm();
     this.checkExistingAuth();
     this.getReturnUrl();
+    this.checkSessionExpired();
   }
 
   private initializeForm(): void {
@@ -69,6 +73,23 @@ export class LoginComponent implements OnInit {
     this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
   }
 
+  /**
+   * Check if user was redirected due to session expiry
+   */
+  private checkSessionExpired(): void {
+    const sessionExpired = this.route.snapshot.queryParams['sessionExpired'];
+    if (sessionExpired === 'true') {
+      this.sessionExpiredMessage.set('Your session has expired due to inactivity. Please log in again.');
+    }
+  }
+
+  /**
+   * Clear session expired message
+   */
+  clearSessionExpiredMessage(): void {
+    this.sessionExpiredMessage.set(null);
+  }
+
   onSubmit(): void {
     this.loginForm.markAllAsTouched();
 
@@ -79,6 +100,7 @@ export class LoginComponent implements OnInit {
 
     this.isLoading.set(true);
     this.errorMessage.set(null);
+    this.sessionExpiredMessage.set(null); // Clear session expired message on submit
 
     const { username, password } = this.loginForm.value;
 
