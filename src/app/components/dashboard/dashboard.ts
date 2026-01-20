@@ -4,7 +4,7 @@ import { Component, inject, signal, computed, OnDestroy, effect } from '@angular
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, interval } from 'rxjs';
 import { AuthService } from '../../services/auth';
 import { FileProcessingService, RequestTimeoutError } from '../../services/file-processing';
 import { 
@@ -31,6 +31,11 @@ export class DashboardComponent implements OnDestroy {
 
   // Subscription management for cleanup
   private currentRequest: Subscription | null = null;
+  private countdownSubscription: Subscription | null = null;
+
+  // Countdown timer
+  remainingSeconds = signal<number>(60);
+  private readonly TIMEOUT_SECONDS = 60;
 
   // Enum references for template
   TransactionType = TransactionType;
@@ -246,11 +251,66 @@ export class DashboardComponent implements OnDestroy {
   }
 
   /**
+   * Start the countdown timer
+   */
+  private startCountdown(): void {
+    this.remainingSeconds.set(this.TIMEOUT_SECONDS);
+    
+    // Clear any existing countdown
+    this.stopCountdown();
+    
+    // Start new countdown - tick every second
+    this.countdownSubscription = interval(1000).subscribe(() => {
+      const current = this.remainingSeconds();
+      if (current > 1) {
+        this.remainingSeconds.set(current - 1);
+      } else {
+        // Countdown reached 0, trigger timeout
+        this.handleCountdownTimeout();
+      }
+    });
+  }
+
+  /**
+   * Stop the countdown timer
+   */
+  private stopCountdown(): void {
+    if (this.countdownSubscription) {
+      this.countdownSubscription.unsubscribe();
+      this.countdownSubscription = null;
+    }
+  }
+
+  /**
+   * Handle timeout when countdown reaches 0
+   */
+  private handleCountdownTimeout(): void {
+    this.stopCountdown();
+    
+    // Cancel the HTTP request
+    if (this.currentRequest) {
+      this.currentRequest.unsubscribe();
+      this.currentRequest = null;
+    }
+    
+    const uuid = this.currentUUID();
+    const uuidSuffix = uuid ? ` (UUID=${uuid})` : '';
+    
+    this.errorMessage.set(`Request timed out. The server did not respond within ${this.TIMEOUT_SECONDS} seconds. Please try again.${uuidSuffix}`);
+    this.isTimeoutError.set(true);
+    this.isProcessing.set(false);
+    this.remainingSeconds.set(this.TIMEOUT_SECONDS);
+  }
+
+  /**
    * Reset dashboard for next request
    * Called after timeout or successful processing
    */
   private resetForNextRequest(): void {
     this.isProcessing.set(false);
+    this.stopCountdown();
+    this.remainingSeconds.set(this.TIMEOUT_SECONDS);
+    
     // Cancel any pending request
     if (this.currentRequest) {
       this.currentRequest.unsubscribe();
@@ -265,6 +325,9 @@ export class DashboardComponent implements OnDestroy {
   cancelRequest(): void {
     console.log('Request cancelled by user');
     
+    // Stop the countdown
+    this.stopCountdown();
+    
     // Unsubscribe from the current request to stop it
     if (this.currentRequest) {
       this.currentRequest.unsubscribe();
@@ -273,6 +336,7 @@ export class DashboardComponent implements OnDestroy {
     
     // Reset processing state
     this.isProcessing.set(false);
+    this.remainingSeconds.set(this.TIMEOUT_SECONDS);
     
     // Clear any partial state
     this.currentUUID.set(null);
@@ -290,7 +354,7 @@ export class DashboardComponent implements OnDestroy {
     const uuidSuffix = uuid ? ` (UUID=${uuid})` : '';
     
     if (error instanceof RequestTimeoutError) {
-      this.errorMessage.set(`Request timed out. The server did not respond within 60 seconds. Please try again.${uuidSuffix}`);
+      this.errorMessage.set(`Request timed out. The server did not respond within ${this.TIMEOUT_SECONDS} seconds. Please try again.${uuidSuffix}`);
       this.isTimeoutError.set(true);
     } else {
       const baseMessage = error.message || 'Processing failed. Please try again.';
@@ -325,6 +389,9 @@ export class DashboardComponent implements OnDestroy {
 
     this.isProcessing.set(true);
     this.clearOutputState();
+    
+    // Start the countdown timer
+    this.startCountdown();
 
     // Build form data for request
     const formData: DashboardFormData = {
@@ -452,6 +519,7 @@ export class DashboardComponent implements OnDestroy {
 
   logout(): void {
     // Cancel any pending request before logout
+    this.stopCountdown();
     if (this.currentRequest) {
       this.currentRequest.unsubscribe();
       this.currentRequest = null;
@@ -464,6 +532,7 @@ export class DashboardComponent implements OnDestroy {
    * Cleanup on component destroy
    */
   ngOnDestroy(): void {
+    this.stopCountdown();
     if (this.currentRequest) {
       this.currentRequest.unsubscribe();
       this.currentRequest = null;
