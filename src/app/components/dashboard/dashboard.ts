@@ -66,12 +66,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     ResponseType.RECEIPT
   ];
 
-  // GETSCHEMA, ERRORRESPONSE, ERRORTIMEOUT: ASN, ORDER, SHIPCONFIRM, RECEIPT
+  // GETSCHEMA, ERRORRESPONSE, ERRORTIMEOUT: ASN, ORDER, SHIPCONFIRM, RECEIPT, ITEM
   private readonly schemaAndErrorResponseTypes: ResponseType[] = [
     ResponseType.ASN,
     ResponseType.ORDER,
     ResponseType.SHIPCONFIRM,
-    ResponseType.RECEIPT
+    ResponseType.RECEIPT,
+    ResponseType.ITEM
   ];
 
   // Selected values using enums
