@@ -14,14 +14,14 @@ export const routes: Routes = [
     loadComponent: () => 
       import('./components/login/login').then(m => m.LoginComponent),
     canActivate: [noAuthGuard],
-    title: 'Login - File Processing App'
+    title: 'Login'
   },
   {
     path: 'dashboard',
     loadComponent: () => 
       import('./components/dashboard/dashboard').then(m => m.DashboardComponent),
     canActivate: [authGuard],
-    title: 'Dashboard - File Processing App'
+    title: 'Dashboard'
   },
   {
     path: '**',
