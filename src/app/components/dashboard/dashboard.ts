@@ -35,8 +35,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private idleTimerSubscription: Subscription | null = null;
 
   // Countdown timer for processing
-  remainingSeconds = signal<number>(60);
-  private readonly TIMEOUT_SECONDS = 60;
+  remainingSeconds = signal<number>(30);
+  private readonly TIMEOUT_SECONDS = 30;
 
   // Idle timeout configuration (5 minutes = 300 seconds)
   private readonly IDLE_TIMEOUT_SECONDS = 300;
