@@ -66,6 +66,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
     ResponseType.RECEIPT
   ];
 
+  // ITEM: ACK only
+  private readonly itemResponseTypes: ResponseType[] = [
+    ResponseType.ACK
+  ];
+
   // GETSCHEMA, ERRORRESPONSE, ERRORTIMEOUT: ASN, ORDER, SHIPCONFIRM, RECEIPT, ITEM
   private readonly schemaAndErrorResponseTypes: ResponseType[] = [
     ResponseType.ASN,
@@ -107,6 +112,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
         return this.orderResponseTypes;
       case TransactionType.ASN:
         return this.asnResponseTypes;
+      case TransactionType.ITEM:
+        return this.itemResponseTypes;
       case TransactionType.GETSCHEMA:
       case TransactionType.ERRORRESPONSE:
       case TransactionType.ERRORTIMEOUT:
@@ -164,6 +171,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
           break;
         case TransactionType.ASN:
           validResponseTypes = this.asnResponseTypes;
+          break;
+        case TransactionType.ITEM:
+          validResponseTypes = this.itemResponseTypes;
           break;
         case TransactionType.GETSCHEMA:
         case TransactionType.ERRORRESPONSE:
