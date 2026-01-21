@@ -35,7 +35,8 @@ export enum ResponseType {
   SHIPCONFIRM = 'SHIPCONFIRM',
   RECEIPT = 'RECEIPT',
   ORDER = 'ORDER',
-  ASN = 'ASN'
+  ASN = 'ASN',
+  ITEM = 'ITEM'
 }
 
 // Request structure to send to Spring Boot backend
