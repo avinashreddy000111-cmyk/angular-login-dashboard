@@ -71,8 +71,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     ResponseType.ACK
   ];
 
-  // GETSCHEMA, ERRORRESPONSE, ERRORTIMEOUT: ASN, ORDER, SHIPCONFIRM, RECEIPT, ITEM
-  private readonly schemaAndErrorResponseTypes: ResponseType[] = [
+  // GETSCHEMA: ASN, ORDER, SHIPCONFIRM, RECEIPT, ITEM
+  private readonly getSchemaResponseTypes: ResponseType[] = [
     ResponseType.ASN,
     ResponseType.ORDER,
     ResponseType.SHIPCONFIRM,
@@ -115,9 +115,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       case TransactionType.ITEM:
         return this.itemResponseTypes;
       case TransactionType.GETSCHEMA:
-      case TransactionType.ERRORRESPONSE:
-      case TransactionType.ERRORTIMEOUT:
-        return this.schemaAndErrorResponseTypes;
+        return this.getSchemaResponseTypes;
       default:
         return this.orderResponseTypes;
     }
@@ -128,23 +126,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return this.selectedTransactionType() === TransactionType.ORDER;
   });
 
-  // Computed: Show ORDER TYPE dropdown AFTER Response Type (when Response Type is ORDER for GETSCHEMA/ERRORRESPONSE/ERRORTIMEOUT)
+  // Computed: Show ORDER TYPE dropdown AFTER Response Type (when Response Type is ORDER for GETSCHEMA)
   showOrderTypeAfterResponse = computed(() => {
     const transactionType = this.selectedTransactionType();
     const responseType = this.selectedResponseType();
     
-    return (transactionType === TransactionType.GETSCHEMA ||
-            transactionType === TransactionType.ERRORRESPONSE ||
-            transactionType === TransactionType.ERRORTIMEOUT) &&
+    return transactionType === TransactionType.GETSCHEMA &&
            responseType === ResponseType.ORDER;
   });
 
-  // Computed: Check if file input should be disabled (for GETSCHEMA, ERRORRESPONSE, ERRORTIMEOUT)
+  // Computed: Check if file input should be disabled (for GETSCHEMA)
   isFileInputDisabled = computed(() => {
     const transactionType = this.selectedTransactionType();
-    return transactionType === TransactionType.GETSCHEMA ||
-           transactionType === TransactionType.ERRORRESPONSE ||
-           transactionType === TransactionType.ERRORTIMEOUT;
+    return transactionType === TransactionType.GETSCHEMA;
   });
 
   // Computed: Check if process button should be disabled
@@ -176,9 +170,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           validResponseTypes = this.itemResponseTypes;
           break;
         case TransactionType.GETSCHEMA:
-        case TransactionType.ERRORRESPONSE:
-        case TransactionType.ERRORTIMEOUT:
-          validResponseTypes = this.schemaAndErrorResponseTypes;
+          validResponseTypes = this.getSchemaResponseTypes;
           break;
         default:
           validResponseTypes = this.orderResponseTypes;
@@ -282,12 +274,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (value === TransactionType.ORDER) {
       this.selectedOrderType.set(OrderType.LTL);
     }
-    // Clear file when switching to types that don't need file
-    if (value === TransactionType.GETSCHEMA ||
-        value === TransactionType.ERRORRESPONSE || 
-        value === TransactionType.ERRORTIMEOUT) {
+    // Clear file when switching to GETSCHEMA (doesn't need file)
+    if (value === TransactionType.GETSCHEMA) {
       this.selectedFile.set(null);
-      // Reset ORDER TYPE when switching to these types (will show again if ORDER is selected as Response Type)
+      // Reset ORDER TYPE when switching to GETSCHEMA (will show again if ORDER is selected as Response Type)
       this.selectedOrderType.set(OrderType.LTL);
     }
   }
@@ -473,9 +463,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
    */
   processFile(): void {
     const transactionType = this.selectedTransactionType();
-    const noFileRequired = transactionType === TransactionType.GETSCHEMA ||
-                          transactionType === TransactionType.ERRORRESPONSE ||
-                          transactionType === TransactionType.ERRORTIMEOUT;
+    const noFileRequired = transactionType === TransactionType.GETSCHEMA;
     const file = this.selectedFile();
     
     // For types that need file, require file
@@ -512,7 +500,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     console.log('Request UUID:', uuid);
 
     if (noFileRequired) {
-      // GETSCHEMA, ERRORRESPONSE, ERRORTIMEOUT - no file needed
+      // GETSCHEMA - no file needed
       this.currentRequest = this.fileService.getSchema(formData, uuid).subscribe({
         next: (response) => {
           console.log('Response received successfully:', response);
